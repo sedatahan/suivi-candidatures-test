@@ -1943,7 +1943,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvKFmmO2O57JFT
 // dans les "Script Properties" du projet Apps Script, propriété API_TOKEN).
 // Ce jeton reste visible dans le code source : il sert à filtrer l'accès trivial
 // (scan d'URL, indexation, requêtes accidentelles), pas à garantir une sécurité absolue.
-const API_TOKEN = 'jdPA7_5BfpHj-1owdpfx0lZp_JNwd8eo';
+const API_TOKEN = 'REMPLACER_PAR_VOTRE_JETON';
 
 // Construit une URL d'appel vers l'Apps Script en y ajoutant systématiquement le jeton.
 function gsUrl(action, params) {
@@ -3113,61 +3113,56 @@ restoreSession();
 // La clé API Gemini est stockée dans les Script Properties du Apps Script
 // (propriété GEMINI_API_KEY) — elle n'est jamais exposée dans le code frontend.
 
-async function preparerLettre(btn, metier, entreprise) {
-  // Trouver la zone bulle dans la même carte
+async function preparerLettre(btn) {
   const card = btn.closest('.alerte-card');
   const zone = card.querySelector('.lettre-bulle-zone');
+  const metier = card.dataset.metier || '';
+  const entreprise = card.dataset.entreprise || '';
 
-  // Si la bulle est déjà ouverte, la fermer (toggle)
+  // Toggle : si bulle déjà ouverte, la fermer
   if (zone.innerHTML.trim()) {
     zone.innerHTML = '';
     btn.textContent = '✉ Préparer ma lettre';
     return;
   }
 
-  btn.textContent = '⏳ Génération...';
-  btn.disabled = true;
+  // Priorité 1 : points déjà dans la carte (depuis le Sheet via get_alertes)
+  if (card.dataset.points) {
+    try {
+      const points = JSON.parse(decodeURIComponent(card.dataset.points));
+      if (points && points.length) {
+        afficherBulleLettre(zone, metier, entreprise, points);
+        btn.textContent = '✕ Fermer';
+        return;
+      }
+    } catch(e) {}
+  }
 
-  // Vérifier le cache local
+  // Priorité 2 : cache local session
   const cacheKey = metier + '||' + entreprise;
   if (lettreCache[cacheKey]) {
     afficherBulleLettre(zone, metier, entreprise, lettreCache[cacheKey]);
     btn.textContent = '✕ Fermer';
-    btn.disabled = false;
     return;
   }
 
-  // Vérifier le cache Sheets (via Apps Script)
-  try {
-    const cacheRes = await fetch(gsUrl('get_lettre_cache',
-      '&metier=' + encodeURIComponent(metier) +
-      '&entreprise=' + encodeURIComponent(entreprise)));
-    const cacheData = await cacheRes.json();
-    if (cacheData.points) {
-      const points = JSON.parse(cacheData.points);
-      lettreCache[cacheKey] = points;
-      afficherBulleLettre(zone, metier, entreprise, points);
-      btn.textContent = '✕ Fermer';
-      btn.disabled = false;
-      return;
-    }
-  } catch(e) { /* pas de cache, on génère */ }
-
-  // Afficher le loader
+  // Priorité 3 : générer via Gemini (Apps Script)
+  btn.textContent = '⏳ Génération...';
+  btn.disabled = true;
   zone.innerHTML = '<div class="lettre-bulle"><div class="lettre-loading">✨ Génération en cours...</div></div>';
 
   try {
     const points = await genererPointsLettre(metier, entreprise);
     lettreCache[cacheKey] = points;
-
-    // Sauvegarder dans le Sheet en arrière-plan
+    // Sauvegarder dans le Sheet LettreCache en arrière-plan
     fetch(gsUrl('save_lettre_cache',
       '&metier=' + encodeURIComponent(metier) +
       '&entreprise=' + encodeURIComponent(entreprise) +
       '&points=' + encodeURIComponent(JSON.stringify(points))
     )).catch(() => {});
-
     afficherBulleLettre(zone, metier, entreprise, points);
+    // Mettre à jour le data-attribute pour les prochains clics
+    card.dataset.points = encodeURIComponent(JSON.stringify(points));
     btn.textContent = '✕ Fermer';
   } catch(e) {
     zone.innerHTML = '<div class="lettre-bulle"><div class="lettre-error">Impossible de générer les conseils : ' + e.message + '</div></div>';
@@ -3269,29 +3264,41 @@ async function loadAlertes() {
   }
 }
 
+function formatAlertDate(dateStr) {
+  if (!dateStr) return '';
+  // Gérer le format "Fri Sep 04 2026 00:00:00 GMT+0200..." ou "2026-09-04"
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString('fr-CH', { day: '2-digit', month: 'long', year: 'numeric' });
+  } catch(e) { return dateStr; }
+}
+
 function renderAlerteCard(a) {
   const metierSafe = (a.metier || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const entrepriseSafe = (a.entreprise || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const lieuSafe = (a.lieu || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  const dateAffichee = formatAlertDate(a.date_mail);
+  const pointsData = a.points ? encodeURIComponent(JSON.stringify(a.points)) : '';
 
-  return `<div class="alerte-card">
+  return `<div class="alerte-card" data-points="${pointsData}" data-metier="${metierSafe}" data-entreprise="${entrepriseSafe}">
     <div class="alerte-card-header">
       <div class="alerte-metier">${a.metier || '—'}</div>
-      ${a.date_mail ? '<span style="font-size:11px;color:var(--text3)">' + a.date_mail + '</span>' : ''}
+      ${dateAffichee ? '<span style="font-size:11px;color:var(--text3)">' + dateAffichee + '</span>' : ''}
     </div>
     ${a.entreprise ? '<div class="alerte-detail">🏢 ' + a.entreprise + '</div>' : ''}
     ${a.lieu ? '<div class="alerte-lieu">📍 ' + a.lieu + '</div>' : ''}
     ${a.places ? '<div class="alerte-detail" style="font-size:12px;color:var(--text3)">Places : ' + a.places + '</div>' : ''}
     <div class="alerte-actions">
-      <button class="alerte-btn-postuler" onclick="postulerDepuisAlerte('${metierSafe}','${entrepriseSafe}','${lieuSafe}')">
-        ✚ Postuler
-      </button>
-      <button class="alerte-btn-lettre" onclick="preparerLettre(this,'${metierSafe}','${entrepriseSafe}')">
+      ${a.lien ? '<a href="' + a.lien + '" target="_blank" rel="noopener" class="alerte-btn-link">Voir l\'annonce ↗</a>' : ''}
+      <button class="alerte-btn-lettre" onclick="preparerLettre(this)">
         ✉ Préparer ma lettre
       </button>
-      ${a.lien ? '<a href="' + a.lien + '" target="_blank" rel="noopener" class="alerte-btn-link">Voir l\'annonce ↗</a>' : ''}
+      <button class="alerte-btn-postuler" onclick="postulerDepuisAlerte('${metierSafe}','${entrepriseSafe}','${lieuSafe}')">
+        ✚ J'ai postulé
+      </button>
     </div>
-    <div class="lettre-bulle-zone">${a.points ? afficherBulleLettreDirect(a.points, a.metier, a.entreprise) : ''}</div>
+    <div class="lettre-bulle-zone"></div>
   </div>`;
 }
 
