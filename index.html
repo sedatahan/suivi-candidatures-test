@@ -1137,7 +1137,6 @@ tr:last-child td { border-bottom: none; }
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -1264,8 +1263,6 @@ tr:last-child td { border-bottom: none; }
       <button class="btn-alertes" onclick="showAlertes()" id="btn-alertes" style="margin-right:6px">
         🔔 <span id="alertes-count-badge">Nouvelles places</span>
       </button>
-      <button class="btn-logout" onclick="refreshYouth()" style="margin-right:6px" title="Rafraîchir">↻</button>
-      <button class="btn-logout" onclick="logout()">Quitter</button>
     </div>
   </div>
   <div class="youth-body">
@@ -1946,7 +1943,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvKFmmO2O57JFT
 // dans les "Script Properties" du projet Apps Script, propriété API_TOKEN).
 // Ce jeton reste visible dans le code source : il sert à filtrer l'accès trivial
 // (scan d'URL, indexation, requêtes accidentelles), pas à garantir une sécurité absolue.
-const API_TOKEN = 'jdPA7_5BfpHj-1owdpfx0lZp_JNwd8eo';
+const API_TOKEN = 'REMPLACER_PAR_VOTRE_JETON';
 
 // Construit une URL d'appel vers l'Apps Script en y ajoutant systématiquement le jeton.
 function gsUrl(action, params) {
@@ -3195,6 +3192,17 @@ async function genererPointsLettre(metier, entreprise) {
   return data.points;
 }
 
+function afficherBulleLettreDirect(points, metier, entreprise) {
+  if (!points || !points.length) return '';
+  return `<div class="lettre-bulle" style="margin-top:12px">
+    <div class="lettre-bulle-title">✨ Pour votre lettre — ${metier}${entreprise ? ' chez ' + entreprise : ''}</div>
+    <div class="lettre-bulle-points">
+      ${points.map((p, i) => `<div class="lettre-point"><div class="lettre-point-num">${i+1}</div><div>${p}</div></div>`).join('')}
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text3)">Ces conseils sont générés par IA — adaptez-les à votre situation.</div>
+  </div>`;
+}
+
 function afficherBulleLettre(zone, metier, entreprise, points) {
   zone.innerHTML = `
     <div class="lettre-bulle">
@@ -3216,295 +3224,52 @@ function afficherBulleLettre(zone, metier, entreprise, points) {
 
 // ── ALERTES ORIENTATION.CH ───────────────────────────────────────────────────
 
-const GMAIL_CLIENT_ID = '42981339681-5e8vqkdpmjlri6mvpe9n192p9e4dmdkf.apps.googleusercontent.com';
-const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-const ORIENTATION_SENDER = 'orientation.ch'; // filtre sur l'expéditeur
-
-let gmailAccessToken = null;
-let alertesCache = []; // cache des annonces parsées
 let alertesReturnScreen = 'youth';
-
-// ── Auth Google OAuth2 ───────────────────────────────────────────────────────
-
-function initGoogleAuth() {
-  // Chargé via le script GSI dans le head
-}
-
-function requestGmailAccess() {
-  if (typeof google === 'undefined') {
-    toast('Chargement en cours, réessayez dans quelques secondes.', true);
-    return;
-  }
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: GMAIL_CLIENT_ID,
-    scope: GMAIL_SCOPE,
-    callback: (response) => {
-      if (response.error) {
-        showAlertesError('Autorisation refusée. Veuillez réessayer.');
-        return;
-      }
-      gmailAccessToken = response.access_token;
-      loadAlertesFromGmail();
-    },
-  });
-  client.requestAccessToken();
-}
-
-// ── Chargement et parsing des mails ─────────────────────────────────────────
-
-async function loadAlertesFromGmail() {
-  const body = document.getElementById('alertes-body');
-  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">Chargement des annonces...</div>';
-
-  try {
-    // Chercher les mails orientation.ch récents (30 derniers jours)
-    const after = Math.floor((Date.now() - 30 * 86400000) / 1000);
-    const query = encodeURIComponent('from:orientation.ch after:' + after);
-    const listRes = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=50`,
-      { headers: { Authorization: 'Bearer ' + gmailAccessToken } }
-    );
-    if (!listRes.ok) throw new Error('Erreur Gmail ' + listRes.status);
-    const listData = await listRes.json();
-
-    if (!listData.messages || !listData.messages.length) {
-      body.innerHTML = '<div class="empty-state"><div class="empty-title">Aucune annonce récente</div><div class="empty-text">Aucun mail d\'orientation.ch reçu dans les 30 derniers jours.</div></div>';
-      return;
-    }
-
-    // Charger le contenu de chaque mail
-    const annonces = [];
-    for (const msg of listData.messages) {
-      const msgRes = await fetch(
-        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
-        { headers: { Authorization: 'Bearer ' + gmailAccessToken } }
-      );
-      const msgData = await msgRes.json();
-      const parsed = parseOrientationMail(msgData);
-      annonces.push(...parsed);
-    }
-
-    alertesCache = annonces;
-    renderAlertes(annonces);
-  } catch(e) {
-    if (e.message.includes('401')) {
-      gmailAccessToken = null;
-      showAlertesAuth();
-    } else {
-      showAlertesError('Erreur lors du chargement : ' + e.message);
-    }
-  }
-}
-
-// ── Parsing du corps des mails orientation.ch ────────────────────────────────
-
-function parseOrientationMail(msgData) {
-  const annonces = [];
-
-  // Extraire le corps du mail (text/plain ou text/html)
-  let bodyText = '';
-  function extractBody(parts) {
-    if (!parts) return;
-    for (const part of parts) {
-      if (part.mimeType === 'text/plain' && part.body && part.body.data) {
-        bodyText += atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
-      } else if (part.parts) {
-        extractBody(part.parts);
-      }
-    }
-  }
-  if (msgData.payload) {
-    if (msgData.payload.body && msgData.payload.body.data) {
-      bodyText = atob(msgData.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
-    } else {
-      extractBody(msgData.payload.parts);
-    }
-  }
-
-  if (!bodyText) return annonces;
-
-  // Date du mail
-  const headers = msgData.payload?.headers || [];
-  const dateHeader = headers.find(h => h.name === 'Date');
-  const mailDate = dateHeader ? new Date(dateHeader.value) : new Date();
-
-  // Parser les blocs d'annonces — chaque annonce a un pattern reconnaissable
-  // Format orientation.ch : Métier / Entreprise / Lieu / Places / ...
-  const blocks = splitIntoBlocks(bodyText);
-
-  for (const block of blocks) {
-    const annonce = parseBlock(block, mailDate);
-    if (annonce) annonces.push(annonce);
-  }
-
-  return annonces;
-}
-
-function splitIntoBlocks(text) {
-  // Séparer par des lignes vides multiples ou des séparateurs
-  const blocks = text.split(/\n{3,}|\r\n{3,}|_{5,}|-{5,}/);
-  return blocks.filter(b => b.trim().length > 30);
-}
-
-function parseBlock(block, mailDate) {
-  const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  if (lines.length < 2) return null;
-
-  let metier = '', entreprise = '', lieu = '', lien = '', places = '', anneeDebut = '';
-
-  // Chercher les patterns dans les lignes
-  for (let i = 0; i < lines.length; i++) {
-    const l = lines[i];
-
-    // Métier : souvent la première ligne substantielle, ou après "Profession :"
-    if (/^profession\s*:/i.test(l)) {
-      metier = l.replace(/^profession\s*:/i, '').trim();
-    } else if (/^m[eé]tier\s*:/i.test(l)) {
-      metier = l.replace(/^m[eé]tier\s*:/i, '').trim();
-    }
-
-    // Entreprise
-    if (/^entreprise\s*:/i.test(l) || /^employeur\s*:/i.test(l)) {
-      entreprise = l.replace(/^(entreprise|employeur)\s*:/i, '').trim();
-    }
-
-    // Lieu
-    if (/^lieu\s*:/i.test(l) || /^localit[eé]\s*:/i.test(l)) {
-      lieu = l.replace(/^(lieu|localit[eé])\s*:/i, '').trim();
-    }
-
-    // Places
-    if (/^(nombre de )?place/i.test(l)) {
-      places = l.replace(/^(nombre de )?places?\s*:/i, '').trim();
-    }
-
-    // Année de début
-    if (/^ann[eé]e\s*(de d[eé]but)?\s*:/i.test(l)) {
-      anneeDebut = l.replace(/^ann[eé]e\s*(de d[eé]but)?\s*:/i, '').trim();
-    }
-
-    // Lien URL
-    if (/https?:\/\/www\.orientation\.ch\//i.test(l)) {
-      const urlMatch = l.match(/https?:\/\/[^\s]+/);
-      if (urlMatch) lien = urlMatch[0];
-    }
-  }
-
-  // Fallback : si pas trouvé avec labels, tenter extraction positionnelle
-  if (!metier && lines.length > 0) {
-    // Première ligne non vide = métier (souvent)
-    metier = lines[0].replace(/^[-•*]\s*/, '');
-  }
-  if (!entreprise && lines.length > 1) {
-    entreprise = lines[1].replace(/^[-•*]\s*/, '');
-  }
-  if (!lieu && lines.length > 2) {
-    // Chercher une ligne avec (GE), (VD), etc. — indicateur de lieu suisse
-    const lieuLine = lines.find(l => /\(GE\)|\(VD\)|\(VS\)|\(FR\)|\(NE\)|\(BE\)|\(ZH\)/i.test(l));
-    if (lieuLine) lieu = lieuLine;
-  }
-
-  // Filtrer : ignorer si on n'a pas au moins un métier
-  if (!metier || metier.length < 4) return null;
-
-  return { metier, entreprise, lieu, lien, places, anneeDebut, mailDate };
-}
-
-// ── Affichage des alertes ────────────────────────────────────────────────────
 
 function showAlertes() {
   alertesReturnScreen = 'youth';
   showScreen('alertes');
-  document.getElementById('alertes-sub').textContent = 'Annonces correspondant à vos projets';
-
-  if (!gmailAccessToken) {
-    showAlertesAuth();
-    return;
-  }
-  // Si cache valide, afficher directement
-  if (alertesCache.length) {
-    renderAlertes(alertesCache);
-  } else {
-    loadAlertesFromGmail();
-  }
+  loadAlertes();
 }
 
 function closeAlertes() {
   showScreen(alertesReturnScreen);
 }
 
-function showAlertesAuth() {
+async function loadAlertes() {
   const body = document.getElementById('alertes-body');
-  body.innerHTML = `
-    <div class="alerte-auth-box">
-      <div class="alerte-auth-title">🔔 Nouvelles places</div>
-      <div class="alerte-auth-sub">
-        Pour afficher les annonces qui correspondent à vos projets, autorisez l'accès à la boîte mail d'alertes CAP Formations.<br><br>
-        <strong>Une seule autorisation suffit.</strong>
-      </div>
-      <button class="btn-google-auth" onclick="requestGmailAccess()">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Autoriser l'accès Gmail
-      </button>
-      <div style="font-size:11px;color:var(--text3);margin-top:14px">
-        Lecture seule — aucun mail ne sera modifié ou envoyé.
-      </div>
-    </div>`;
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">Chargement des annonces...</div>';
+
+  try {
+    const favorisParam = youthFavoris.length ? '&favoris=' + encodeURIComponent(youthFavoris.join('|')) : '';
+    const res = await fetch(gsUrl('get_alertes', favorisParam));
+    if (!res.ok) throw new Error('Erreur serveur ' + res.status);
+    const annonces = await res.json();
+
+    if (annonces.error) throw new Error(annonces.error);
+
+    document.getElementById('alertes-sub').textContent =
+      annonces.length + ' annonce' + (annonces.length > 1 ? 's' : '') + ' pour vos projets';
+
+    if (!annonces.length) {
+      body.innerHTML = '<div class="empty-state"><div class="empty-title">Aucune annonce</div>'
+        + '<div class="empty-text">Aucune nouvelle place ne correspond à vos projets favoris pour le moment.</div></div>';
+      return;
+    }
+
+    body.innerHTML = annonces.map(a => renderAlerteCard(a)).join('')
+      + '<div style="text-align:center;margin-top:24px;font-size:12px;color:var(--text3)">Mis à jour toutes les heures · orientation.ch</div>';
+
+  } catch(e) {
+    body.innerHTML = '<div class="alerte-auth-box">'
+      + '<div class="alerte-auth-title" style="color:var(--refus-text)">Erreur</div>'
+      + '<div class="alerte-auth-sub">' + e.message + '</div>'
+      + '<button class="btn-google-auth" onclick="loadAlertes()">Réessayer</button>'
+      + '</div>';
+  }
 }
 
-function showAlertesError(msg) {
-  const body = document.getElementById('alertes-body');
-  body.innerHTML = `<div class="alerte-auth-box">
-    <div class="alerte-auth-title" style="color:var(--refus-text)">Erreur</div>
-    <div class="alerte-auth-sub">${msg}</div>
-    <button class="btn-google-auth" onclick="requestGmailAccess()">Réessayer</button>
-  </div>`;
-}
-
-function renderAlertes(annonces) {
-  const body = document.getElementById('alertes-body');
-
-  // Filtrer selon les favoris du jeune
-  const favoris = youthFavoris.map(f => f.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
-  const pertinentes = favoris.length > 0
-    ? annonces.filter(a => {
-        const m = a.metier.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        return favoris.some(f => m.includes(f.substring(0,8)) || f.includes(m.substring(0,8)));
-      })
-    : annonces;
-
-  const autres = annonces.filter(a => !pertinentes.includes(a));
-
-  document.getElementById('alertes-sub').textContent =
-    pertinentes.length + ' annonce' + (pertinentes.length > 1 ? 's' : '') + ' pour vos projets';
-
-  if (!annonces.length) {
-    body.innerHTML = '<div class="empty-state"><div class="empty-title">Aucune annonce</div><div class="empty-text">Aucune nouvelle place reçue dans les 30 derniers jours.</div></div>';
-    return;
-  }
-
-  let html = '';
-
-  if (pertinentes.length) {
-    html += '<div class="alerte-section-label">📌 Correspondant à vos projets</div>';
-    html += pertinentes.map(a => renderAlerteCard(a, true)).join('');
-  }
-
-  if (autres.length) {
-    html += '<div class="alerte-section-label" style="margin-top:' + (pertinentes.length ? '24px' : '0') + '">Autres annonces reçues</div>';
-    html += autres.map(a => renderAlerteCard(a, false)).join('');
-  }
-
-  body.innerHTML = html;
-
-  // Bouton rafraîchir
-  body.innerHTML += `<div style="text-align:center;margin-top:24px">
-    <button onclick="loadAlertesFromGmail()" class="alertes-back-btn">↻ Actualiser</button>
-  </div>`;
-}
-
-function renderAlerteCard(a, isPertinente) {
-  const dateStr = a.mailDate ? new Date(a.mailDate).toLocaleDateString('fr-CH', {day:'2-digit',month:'short'}) : '';
+function renderAlerteCard(a) {
   const metierSafe = (a.metier || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const entrepriseSafe = (a.entreprise || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const lieuSafe = (a.lieu || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -3512,7 +3277,7 @@ function renderAlerteCard(a, isPertinente) {
   return `<div class="alerte-card">
     <div class="alerte-card-header">
       <div class="alerte-metier">${a.metier || '—'}</div>
-      ${isPertinente ? '<span class="alerte-new">★ Votre projet</span>' : (dateStr ? '<span style="font-size:11px;color:var(--text3)">' + dateStr + '</span>' : '')}
+      ${a.date_mail ? '<span style="font-size:11px;color:var(--text3)">' + a.date_mail + '</span>' : ''}
     </div>
     ${a.entreprise ? '<div class="alerte-detail">🏢 ' + a.entreprise + '</div>' : ''}
     ${a.lieu ? '<div class="alerte-lieu">📍 ' + a.lieu + '</div>' : ''}
@@ -3526,7 +3291,7 @@ function renderAlerteCard(a, isPertinente) {
       </button>
       ${a.lien ? '<a href="' + a.lien + '" target="_blank" rel="noopener" class="alerte-btn-link">Voir l\'annonce ↗</a>' : ''}
     </div>
-    <div class="lettre-bulle-zone"></div>
+    <div class="lettre-bulle-zone">${a.points ? afficherBulleLettreDirect(a.points, a.metier, a.entreprise) : ''}</div>
   </div>`;
 }
 
@@ -3741,8 +3506,6 @@ function renderStats(items, favoris, nom) {
     modal.addEventListener('touchstart', (e) => {
       startY = e.touches[0].clientY;
       currentY = startY;
-      // On n'autorise le swipe-to-close que si le contenu est déjà scrollé en haut,
-      // pour ne pas interférer avec le scroll normal du formulaire.
       startedAtTop = modal.scrollTop <= 0;
       dragging = startedAtTop;
       modal.style.transition = 'none';
@@ -3753,9 +3516,11 @@ function renderStats(items, favoris, nom) {
       currentY = e.touches[0].clientY;
       const delta = currentY - startY;
       if (delta > 0) {
+        // Empêcher le scroll du body pendant le swipe vers le bas
+        e.preventDefault();
         modal.style.transform = 'translateY(' + delta + 'px)';
       }
-    }, { passive: true });
+    }, { passive: false });
 
     modal.addEventListener('touchend', () => {
       if (!dragging) return;
@@ -3806,12 +3571,10 @@ function renderFavorisHeader() {
   // Sur desktop : les pills complètes avec lien orientation.ch
   const desktopParts = youthFavoris.map(m => {
     const url = orientationUrl(m);
-    return '<span class="favori-pill favori-pill-desktop" style="display:inline-flex;align-items:center;gap:4px">'
-      + '<span onclick="openFavorisModal()" style="cursor:pointer" title="Modifier mes projets">★ ' + m + '</span>'
-      + '<a href="' + url + '" target="_blank" rel="noopener" '
-      + 'title="Fiche métier orientation.ch" onclick="event.stopPropagation()" '
-      + 'style="color:var(--accent);font-size:11px;opacity:0.75;text-decoration:none;line-height:1">↗</a>'
-      + '</span>';
+    return '<a href="' + url + '" target="_blank" rel="noopener" '
+      + 'class="favori-pill favori-pill-desktop" '
+      + 'style="cursor:pointer;text-decoration:none" '
+      + 'title="Voir la fiche métier sur orientation.ch">★ ' + m + '</a>';
   }).join('');
   container.innerHTML = mobilePart + desktopParts;
 }
@@ -3850,13 +3613,15 @@ function closeFavorisModal() {
 }
 
 function toOrientationSlug(metier) {
-  return metier
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // supprimer les accents
-    .replace(/[\/\\()\[\]'".,:;!?@#&*+=<>]/g, '')    // supprimer la ponctuation
-    .replace(/\s+/g, '-')                              // espaces → tirets
-    .replace(/-+/g, '-')                               // tirets multiples → un seul
-    .replace(/^-|-$/g, '');                            // supprimer tirets en début/fin
+  let s = metier.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\/\\()\[\]'".,:;!?@#&*+=<>]/g, '')
+    .trim();
+  // Format épicène orientation.ch : "cuisinier cfc" → "cuisinier-iere-cfc"
+  s = s.replace(/^([a-z]+(?:-[a-z]+)*)\s+(cfc|afp|cfc-afp|afc)(.*)?$/, (_, nom, suffixe, reste) => {
+    return nom + '-iere-' + suffixe + (reste ? reste : '');
+  });
+  return s.replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 }
 
 function orientationUrl(metier) {
@@ -3871,14 +3636,11 @@ function renderFavorisTags() {
   }
   container.innerHTML = youthFavoris.map((m, i) => {
     const url = orientationUrl(m);
-    const safe = m.replace(/'/g, "\\'");
     return '<span class="favoris-tag">'
-      + m
       + '<a href="' + url + '" target="_blank" rel="noopener" '
-      + 'title="Voir la fiche métier sur orientation.ch" '
       + 'onclick="event.stopPropagation()" '
-      + 'style="margin-left:6px;color:var(--accent);font-size:12px;opacity:0.8;text-decoration:none;flex-shrink:0" '
-      + '>↗</a>'
+      + 'style="color:inherit;text-decoration:none;cursor:pointer" '
+      + 'title="Voir la fiche métier sur orientation.ch">' + m + '</a>'
       + '<button class="favoris-tag-remove" onclick="removeFavori(' + i + ')" aria-label="Supprimer">×</button>'
       + '</span>';
   }).join('');
