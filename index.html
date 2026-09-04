@@ -1943,7 +1943,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvKFmmO2O57JFT
 // dans les "Script Properties" du projet Apps Script, propriété API_TOKEN).
 // Ce jeton reste visible dans le code source : il sert à filtrer l'accès trivial
 // (scan d'URL, indexation, requêtes accidentelles), pas à garantir une sécurité absolue.
-const API_TOKEN = 'jdPA7_5BfpHj-1owdpfx0lZp_JNwd8eo';
+const API_TOKEN = 'REMPLACER_PAR_VOTRE_JETON';
 
 // Construit une URL d'appel vers l'Apps Script en y ajoutant systématiquement le jeton.
 function gsUrl(action, params) {
@@ -3302,7 +3302,20 @@ function renderAlerteCard(a) {
   </div>`;
 }
 
+function nettoyerMetierOrientation(metier) {
+  // Supprimer les spécialisations entre parenthèses
+  // "Employé/e de commerce (Assurance-maladie) CFC" → "Employé de commerce CFC"
+  let s = metier
+    .replace(/\([^)]*\)/g, '')   // supprimer tout ce qui est entre parenthèses
+    .replace(/\/e\b/g, '')        // supprimer le /e épicène (Employé/e → Employé)
+    .replace(/\/ne\b/g, '')       // supprimer le /ne épicène (Logisticien/ne → Logisticien)
+    .replace(/\s+/g, ' ')         // normaliser les espaces
+    .trim();
+  return s;
+}
+
 function postulerDepuisAlerte(metier, entreprise, lieu) {
+  const metierNettoye = nettoyerMetierOrientation(metier);
   // Préremplir le formulaire de nouvelle candidature et fermer les alertes
   closeAlertes();
   openModal(null);
@@ -3313,14 +3326,14 @@ function postulerDepuisAlerte(metier, entreprise, lieu) {
     const fNotes = document.getElementById('f-notes');
     if (fEnterprise) fEnterprise.value = entreprise;
     if (fMetier) {
-      fMetier.value = metier;
+      fMetier.value = metierNettoye;
       document.getElementById('metier-error') && (document.getElementById('metier-error').style.display = 'none');
     }
     if (fNotes && lieu) fNotes.value = lieu ? 'Lieu : ' + lieu : '';
-    // Focus sur le type de demande (premier champ)
     document.getElementById('f-type') && document.getElementById('f-type').focus();
   }, 150);
 }
+
 
 // ── STATISTIQUES ─────────────────────────────────────────────────────────────
 
