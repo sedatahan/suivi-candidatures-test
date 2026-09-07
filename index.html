@@ -776,7 +776,23 @@ body {
   color: var(--accent); border: 1px solid var(--accent);
   border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
   cursor: pointer; font-family: 'DM Sans', sans-serif;
-  white-space: nowrap;
+  white-space: nowrap; position: relative;
+}
+.alertes-badge {
+  position: absolute;
+  top: -6px; right: -6px;
+  background: #EF4444; color: #fff;
+  border-radius: 50%; width: 18px; height: 18px;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--surface);
+}
+.btn-deja-postule {
+  padding: 7px 14px;
+  background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
 }
 
 /* ── IMPRESSION / PDF ── */
@@ -1262,6 +1278,7 @@ tr:last-child td { border-bottom: none; }
       </div>
       <button class="btn-alertes" onclick="showAlertes()" id="btn-alertes" style="margin-right:6px">
         🔔 <span id="alertes-count-badge">Nouvelles places</span>
+        <span id="alertes-pastille" class="alertes-badge" style="display:none"></span>
       </button>
     </div>
   </div>
@@ -1943,7 +1960,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvKFmmO2O57JFT
 // dans les "Script Properties" du projet Apps Script, propriété API_TOKEN).
 // Ce jeton reste visible dans le code source : il sert à filtrer l'accès trivial
 // (scan d'URL, indexation, requêtes accidentelles), pas à garantir une sécurité absolue.
-const API_TOKEN = 'jdPA7_5BfpHj-1owdpfx0lZp_JNwd8eo';
+const API_TOKEN = 'REMPLACER_PAR_VOTRE_JETON';
 
 // Construit une URL d'appel vers l'Apps Script en y ajoutant systématiquement le jeton.
 function gsUrl(action, params) {
@@ -2140,6 +2157,11 @@ async function loginYouth() {
     showScreen('youth');
     renderYouth();
     checkFavorisBanner();
+    // Charger les alertes en arrière-plan pour la pastille
+    fetch(gsUrl('get_alertes_postulee', '&code=' + encodeURIComponent(code)))
+      .then(r => r.json()).then(ids => {
+        alertesPostulees = new Set(Array.isArray(ids) ? ids : []);
+      }).catch(() => {});
     saveSession();
   } catch(e) {
     showError('Erreur de connexion. Vérifie ta connexion internet.');
@@ -3220,9 +3242,13 @@ function afficherBulleLettre(zone, metier, entreprise, points) {
 // ── ALERTES ORIENTATION.CH ───────────────────────────────────────────────────
 
 let alertesReturnScreen = 'youth';
+let alertesPostulees = new Set(); // IDs des annonces déjà postulées
+let alertesData = []; // cache des annonces chargées
+let showingArchives = false;
 
 function showAlertes() {
   alertesReturnScreen = 'youth';
+  showingArchives = false;
   showScreen('alertes');
   loadAlertes();
 }
@@ -3236,24 +3262,22 @@ async function loadAlertes() {
   body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">Chargement des annonces...</div>';
 
   try {
-    const favorisParam = youthFavoris.length ? '&favoris=' + encodeURIComponent(youthFavoris.join('|')) : '';
-    const res = await fetch(gsUrl('get_alertes', favorisParam));
-    if (!res.ok) throw new Error('Erreur serveur ' + res.status);
-    const annonces = await res.json();
+    // Charger en parallèle : annonces + annonces déjà postulées
+    const [resAlertes, resPostulees] = await Promise.all([
+      fetch(gsUrl('get_alertes', '&favoris=' + encodeURIComponent(youthFavoris.join('|')))),
+      fetch(gsUrl('get_alertes_postulee', '&code=' + encodeURIComponent(currentUser)))
+    ]);
+
+    if (!resAlertes.ok) throw new Error('Erreur serveur ' + resAlertes.status);
+    const annonces = await resAlertes.json();
+    const postulee = await resPostulees.json();
 
     if (annonces.error) throw new Error(annonces.error);
 
-    document.getElementById('alertes-sub').textContent =
-      annonces.length + ' annonce' + (annonces.length > 1 ? 's' : '') + ' pour vos projets';
+    alertesData = annonces;
+    alertesPostulees = new Set(Array.isArray(postulee) ? postulee : []);
 
-    if (!annonces.length) {
-      body.innerHTML = '<div class="empty-state"><div class="empty-title">Aucune annonce</div>'
-        + '<div class="empty-text">Aucune nouvelle place ne correspond à vos projets favoris pour le moment.</div></div>';
-      return;
-    }
-
-    body.innerHTML = annonces.map(a => renderAlerteCard(a)).join('')
-      + '<div style="text-align:center;margin-top:24px;font-size:12px;color:var(--text3)">Mis à jour toutes les heures · orientation.ch</div>';
+    renderAlertesView();
 
   } catch(e) {
     body.innerHTML = '<div class="alerte-auth-box">'
@@ -3262,6 +3286,56 @@ async function loadAlertes() {
       + '<button class="btn-google-auth" onclick="loadAlertes()">Réessayer</button>'
       + '</div>';
   }
+}
+
+function renderAlertesView() {
+  const body = document.getElementById('alertes-body');
+  const actives = alertesData.filter(a => !alertesPostulees.has(a.id_mail));
+  const archivees = alertesData.filter(a => alertesPostulees.has(a.id_mail));
+
+  // Mettre à jour la pastille
+  const pastille = document.getElementById('alertes-pastille');
+  if (pastille) {
+    if (actives.length > 0) {
+      pastille.textContent = actives.length > 9 ? '9+' : actives.length;
+      pastille.style.display = 'flex';
+    } else {
+      pastille.style.display = 'none';
+    }
+  }
+
+  document.getElementById('alertes-sub').textContent =
+    showingArchives
+      ? archivees.length + ' candidature' + (archivees.length > 1 ? 's' : '') + ' envoyée' + (archivees.length > 1 ? 's' : '')
+      : actives.length + ' annonce' + (actives.length > 1 ? 's' : '') + ' disponible' + (actives.length > 1 ? 's' : '');
+
+  const displayed = showingArchives ? archivees : actives;
+
+  // Barre de navigation entre actives et archivées
+  const navHTML = `<div style="display:flex;gap:8px;margin-bottom:16px">
+    <button onclick="setAlertesView(false)" class="${!showingArchives ? 'alerte-btn-postuler' : 'btn-deja-postule'}" style="font-size:13px">
+      🔔 Nouvelles (${actives.length})
+    </button>
+    <button onclick="setAlertesView(true)" class="${showingArchives ? 'alerte-btn-postuler' : 'btn-deja-postule'}" style="font-size:13px">
+      ✓ Déjà postulé (${archivees.length})
+    </button>
+  </div>`;
+
+  if (!displayed.length) {
+    body.innerHTML = navHTML + '<div class="empty-state">'
+      + '<div class="empty-title">' + (showingArchives ? 'Aucune candidature envoyée' : 'Aucune nouvelle annonce') + '</div>'
+      + '<div class="empty-text">' + (showingArchives ? 'Les annonces pour lesquelles vous avez postulé apparaîtront ici.' : 'Toutes les annonces ont été traitées.') + '</div>'
+      + '</div>';
+    return;
+  }
+
+  body.innerHTML = navHTML + displayed.map(a => renderAlerteCard(a, showingArchives)).join('')
+    + '<div style="text-align:center;margin-top:24px;font-size:12px;color:var(--text3)">Mis à jour toutes les heures · orientation.ch</div>';
+}
+
+function setAlertesView(archives) {
+  showingArchives = archives;
+  renderAlertesView();
 }
 
 function formatAlertDate(dateStr) {
@@ -3274,29 +3348,29 @@ function formatAlertDate(dateStr) {
   } catch(e) { return dateStr; }
 }
 
-function renderAlerteCard(a) {
+function renderAlerteCard(a, isArchive) {
   const metierSafe = (a.metier || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const entrepriseSafe = (a.entreprise || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const lieuSafe = (a.lieu || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  const idSafe = (a.id_mail || '').replace(/'/g, "\\'");
   const dateAffichee = formatAlertDate(a.date_mail);
   const pointsData = a.points ? encodeURIComponent(JSON.stringify(a.points)) : '';
 
-  return `<div class="alerte-card" data-points="${pointsData}" data-metier="${metierSafe}" data-entreprise="${entrepriseSafe}">
+  return `<div class="alerte-card${isArchive ? '" style="opacity:0.75' : ''}" data-points="${pointsData}" data-metier="${metierSafe}" data-entreprise="${entrepriseSafe}">
     <div class="alerte-card-header">
       <div class="alerte-metier">${a.metier || '—'}</div>
-      ${dateAffichee ? '<span style="font-size:11px;color:var(--text3)">' + dateAffichee + '</span>' : ''}
+      <div style="display:flex;align-items:center;gap:6px">
+        ${isArchive ? '<span style="font-size:11px;color:#059669;font-weight:600">✓ Postulé</span>' : ''}
+        ${dateAffichee ? '<span style="font-size:11px;color:var(--text3)">' + dateAffichee + '</span>' : ''}
+      </div>
     </div>
     ${a.entreprise ? '<div class="alerte-detail">🏢 ' + a.entreprise + '</div>' : ''}
     ${a.lieu ? '<div class="alerte-lieu">📍 ' + a.lieu + '</div>' : ''}
     ${a.places ? '<div class="alerte-detail" style="font-size:12px;color:var(--text3)">Places : ' + a.places + '</div>' : ''}
     <div class="alerte-actions">
       ${a.lien ? '<a href="' + a.lien + '" target="_blank" rel="noopener" class="alerte-btn-link">Voir l\'annonce ↗</a>' : ''}
-      <button class="alerte-btn-lettre" onclick="preparerLettre(this)">
-        ✉ Préparer ma lettre
-      </button>
-      <button class="alerte-btn-postuler" onclick="postulerDepuisAlerte('${metierSafe}','${entrepriseSafe}','${lieuSafe}')">
-        ✚ J'ai postulé
-      </button>
+      <button class="alerte-btn-lettre" onclick="preparerLettre(this)">✉ Préparer ma lettre</button>
+      ${!isArchive ? `<button class="alerte-btn-postuler" onclick="postulerDepuisAlerte('${metierSafe}','${entrepriseSafe}','${lieuSafe}','${idSafe}')">✚ J'ai postulé</button>` : ''}
     </div>
     <div class="lettre-bulle-zone"></div>
   </div>`;
@@ -3314,9 +3388,19 @@ function nettoyerMetierOrientation(metier) {
   return s;
 }
 
-function postulerDepuisAlerte(metier, entreprise, lieu) {
-  const metierNettoye = nettoyerMetierOrientation(metier);
+function postulerDepuisAlerte(metier, entreprise, lieu, idAlerte) {
+  // Marquer comme postulée localement et dans le Sheet
+  if (idAlerte) {
+    alertesPostulees.add(idAlerte);
+    fetch(gsUrl('save_alerte_postulee',
+      '&code=' + encodeURIComponent(currentUser) +
+      '&id_alerte=' + encodeURIComponent(idAlerte)
+    )).catch(() => {});
+    // Mettre à jour la pastille
+    renderAlertesView();
+  }
   // Préremplir le formulaire de nouvelle candidature et fermer les alertes
+  const metierNettoye = nettoyerMetierOrientation(metier);
   closeAlertes();
   openModal(null);
   // Attendre que le modal soit ouvert
