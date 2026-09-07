@@ -1685,8 +1685,7 @@ async function restoreSession() {
       showScreen('youth');
       renderYouth();
       checkFavorisBanner();
-      showScreen('youth');
-      renderYouth();
+      prechargerAlertes(user);
     }
   } catch(e) {
     clearSession();
@@ -1960,7 +1959,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvKFmmO2O57JFT
 // dans les "Script Properties" du projet Apps Script, propriété API_TOKEN).
 // Ce jeton reste visible dans le code source : il sert à filtrer l'accès trivial
 // (scan d'URL, indexation, requêtes accidentelles), pas à garantir une sécurité absolue.
-const API_TOKEN = 'jdPA7_5BfpHj-1owdpfx0lZp_JNwd8eo';
+const API_TOKEN = 'REMPLACER_PAR_VOTRE_JETON';
 
 // Construit une URL d'appel vers l'Apps Script en y ajoutant systématiquement le jeton.
 function gsUrl(action, params) {
@@ -2157,11 +2156,8 @@ async function loginYouth() {
     showScreen('youth');
     renderYouth();
     checkFavorisBanner();
-    // Charger les alertes en arrière-plan pour la pastille
-    fetch(gsUrl('get_alertes_postulee', '&code=' + encodeURIComponent(code)))
-      .then(r => r.json()).then(ids => {
-        alertesPostulees = new Set(Array.isArray(ids) ? ids : []);
-      }).catch(() => {});
+    // Charger alertes + postulées en arrière-plan pour afficher la pastille dès le login
+    prechargerAlertes(code);
     saveSession();
   } catch(e) {
     showError('Erreur de connexion. Vérifie ta connexion internet.');
@@ -3239,6 +3235,31 @@ function afficherBulleLettre(zone, metier, entreprise, points) {
     </div>`;
 }
 
+async function prechargerAlertes(code) {
+  try {
+    const favorisParam = youthFavoris.length ? '&favoris=' + encodeURIComponent(youthFavoris.join('|')) : '';
+    const [resAlertes, resPostulees] = await Promise.all([
+      fetch(gsUrl('get_alertes', favorisParam)),
+      fetch(gsUrl('get_alertes_postulee', '&code=' + encodeURIComponent(code)))
+    ]);
+    const annonces = await resAlertes.json();
+    const postulee = await resPostulees.json();
+    alertesData = Array.isArray(annonces) ? annonces : [];
+    alertesPostulees = new Set(Array.isArray(postulee) ? postulee : []);
+    // Mettre à jour la pastille
+    const actives = alertesData.filter(a => !alertesPostulees.has(a.id_mail));
+    const pastille = document.getElementById('alertes-pastille');
+    if (pastille) {
+      if (actives.length > 0) {
+        pastille.textContent = actives.length > 9 ? '9+' : actives.length;
+        pastille.style.display = 'flex';
+      } else {
+        pastille.style.display = 'none';
+      }
+    }
+  } catch(e) { /* silencieux — pas critique */ }
+}
+
 // ── ALERTES ORIENTATION.CH ───────────────────────────────────────────────────
 
 let alertesReturnScreen = 'youth';
@@ -3259,6 +3280,13 @@ function closeAlertes() {
 
 async function loadAlertes() {
   const body = document.getElementById('alertes-body');
+
+  // Si déjà chargé en arrière-plan, afficher directement
+  if (alertesData.length > 0) {
+    renderAlertesView();
+    return;
+  }
+
   body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">Chargement des annonces...</div>';
 
   try {
