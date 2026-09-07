@@ -1943,7 +1943,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvKFmmO2O57JFT
 // dans les "Script Properties" du projet Apps Script, propriété API_TOKEN).
 // Ce jeton reste visible dans le code source : il sert à filtrer l'accès trivial
 // (scan d'URL, indexation, requêtes accidentelles), pas à garantir une sécurité absolue.
-const API_TOKEN = 'jdPA7_5BfpHj-1owdpfx0lZp_JNwd8eo';
+const API_TOKEN = 'REMPLACER_PAR_VOTRE_JETON';
 
 // Construit une URL d'appel vers l'Apps Script en y ajoutant systématiquement le jeton.
 function gsUrl(action, params) {
@@ -3634,16 +3634,50 @@ function closeFavorisModal() {
   document.getElementById('favoris-suggestions').style.display = 'none';
 }
 
+// Table de correspondance pour les métiers composés courants
+const ORIENTATION_SLUGS = {
+  'boulanger-patissier-cfc': 'boulanger-ere-patissier-iere-confiseur-euse-cfc',
+  'boulanger-patissier-afp': 'boulanger-ere-patissier-iere-confiseur-euse-afp',
+  'agent-d-exploitation-cfc': 'agent-e-d-exploitation-cfc',
+  'agent-dexploitation-cfc': 'agent-e-d-exploitation-cfc',
+  'employe-e-de-commerce-cfc': 'employe-e-de-commerce-cfc',
+  'assistant-e-de-bureau-afp': 'assistant-e-de-bureau-afp',
+  'agent-de-voyage-cfc': 'agent-e-de-voyage-cfc',
+  'technicien-ienne-en-horlogerie-cfc': 'technicien-ienne-en-horlogerie-cfc',
+  'dessinateur-trice-en-batiment-cfc': 'dessinateur-trice-en-batiment-cfc',
+  'polydesigner-iere-3d-cfc': 'polydesigner-iere-3d-cfc',
+};
+
 function toOrientationSlug(metier) {
-  let s = metier.toLowerCase()
+  const normalize = s => s.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\/\\()\[\]'".,:;!?@#&*+=<>]/g, '')
+    .replace(/[\/\\()\[\]'".,:;!?@#&*+=<>]/g, '').replace(/'/g, '-')
     .trim();
-  // Format épicène orientation.ch : "cuisinier cfc" → "cuisinier-iere-cfc"
-  s = s.replace(/^([a-z]+(?:-[a-z]+)*)\s+(cfc|afp|cfc-afp|afc)(.*)?$/, (_, nom, suffixe, reste) => {
-    return nom + '-iere-' + suffixe + (reste ? reste : '');
-  });
-  return s.replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
+  // Séparer suffixe CFC/AFP et nom du métier
+  const suffixMatch = metier.match(/\b(cfc|afp|cfc-afp|afc)\b/i);
+  const suffixe = suffixMatch ? normalize(suffixMatch[1]) : '';
+  const nomBrut = metier.replace(/\b(cfc|afp|cfc-afp|afc)\b/i, '').trim();
+  const nom = normalize(nomBrut).replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const slugBase = suffixe ? nom + '-' + suffixe : nom;
+
+  // Vérifier la table de correspondance en premier
+  if (ORIENTATION_SLUGS[slugBase]) return ORIENTATION_SLUGS[slugBase];
+
+  // Pattern épicène sur le premier mot uniquement
+  const mots = nom.split('-');
+  const premier = mots[0];
+  const reste2 = mots.slice(1).join('-');
+  let premierEpicene;
+  if (/ien$/.test(premier))        { premierEpicene = premier + '-ienne'; }
+  else if (/ier$/.test(premier))   { premierEpicene = premier + '-iere'; }
+  else if (/teur$/.test(premier))  { premierEpicene = premier.replace(/teur$/, 'teur-trice'); }
+  else if (/eur$/.test(premier))   { premierEpicene = premier + '-euse'; }
+  else if (/e$/.test(premier) && !/ee$/.test(premier)) { premierEpicene = premier + '-e'; }
+  else                              { premierEpicene = premier; }
+
+  const nomEpicene = reste2 ? premierEpicene + '-' + reste2 : premierEpicene;
+  return suffixe ? nomEpicene + '-' + suffixe : nomEpicene;
 }
 
 function orientationUrl(metier) {
