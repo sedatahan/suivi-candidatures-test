@@ -1371,6 +1371,9 @@ tr:last-child td { border-bottom: none; }
         🔔 <span id="alertes-count-badge">Nouvelles places</span>
         <span id="alertes-pastille" class="alertes-badge" style="display:none"></span>
       </button>
+      <button class="btn-logout" onclick="togglePushSubscription()" id="btn-push" title="Activer les rappels" style="padding:5px 10px;font-size:13px;margin-right:6px">
+        🔕 Rappels
+      </button>
     </div>
   </div>
   <div class="youth-body">
@@ -2066,6 +2069,96 @@ function gsUrl(action, params) {
   return url;
 }
 
+// ── NOTIFICATIONS PUSH ────────────────────────────────────────────────────────
+// Convertit la clé publique VAPID (base64url) en Uint8Array attendu par pushManager.subscribe
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+function estPWAInstallee() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function estIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+// Met à jour l'apparence du bouton selon l'état actuel de l'abonnement
+async function updatePushButtonState() {
+  const btn = document.getElementById('btn-push');
+  if (!btn || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    if (btn) btn.style.display = 'none';
+    return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      btn.textContent = '🔔 Rappels activés';
+      btn.title = 'Désactiver les rappels';
+    } else {
+      btn.textContent = '🔕 Rappels';
+      btn.title = 'Activer les rappels';
+    }
+  } catch (err) { /* silencieux : l'état reste par défaut */ }
+}
+
+async function togglePushSubscription() {
+  const btn = document.getElementById('btn-push');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    showError('Les notifications ne sont pas disponibles sur ce navigateur.');
+    return;
+  }
+  if (estIOS() && !estPWAInstallee()) {
+    showError('Sur iPhone, ajoutez d\'abord l\'app à votre écran d\'accueil (bouton Partager → Sur l\'écran d\'accueil) pour activer les rappels.');
+    return;
+  }
+
+  const reg = await navigator.serviceWorker.ready;
+  const subExistante = await reg.pushManager.getSubscription();
+
+  if (subExistante) {
+    // Déjà abonné → on désactive
+    try {
+      await subExistante.unsubscribe();
+      await fetch(gsUrl('delete_push_subscription'), {
+        method: 'POST',
+        body: new URLSearchParams({ code: currentUser, endpoint: subExistante.endpoint })
+      });
+    } catch (err) { /* on met quand même à jour l'UI */ }
+    updatePushButtonState();
+    return;
+  }
+
+  // Pas encore abonné → on demande la permission puis on s'abonne
+  btn.disabled = true;
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      showError('Permission refusée. Vous pouvez la réactiver dans les réglages du navigateur.');
+      return;
+    }
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    await fetch(gsUrl('save_push_subscription'), {
+      method: 'POST',
+      body: new URLSearchParams({ code: currentUser, subscription: JSON.stringify(sub) })
+    });
+  } catch (err) {
+    showError('Impossible d\'activer les rappels : ' + err.message);
+  } finally {
+    btn.disabled = false;
+    updatePushButtonState();
+  }
+}
+
 let currentUser = null;
 let currentRole = null;
 let allData = {};
@@ -2256,6 +2349,7 @@ async function loginYouth() {
     showScreen('youth');
     renderYouth();
     checkFavorisBanner();
+    updatePushButtonState();
     // Charger alertes + postulées en arrière-plan pour afficher la pastille dès le login
     prechargerAlertes(code);
     saveSession();

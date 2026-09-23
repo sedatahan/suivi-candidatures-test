@@ -29,3 +29,32 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });
+
+// ── NOTIFICATIONS PUSH ────────────────────────────────────────────────────────
+self.addEventListener('push', e => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch (err) { data = { titre: 'Candidatures', corps: e.data ? e.data.text() : '' }; }
+
+  const titre = data.titre || 'Candidatures';
+  const options = {
+    body: data.corps || '',
+    icon: 'icon-152.png',
+    badge: 'icon-152.png',
+    data: { url: data.url || './' },
+    tag: data.tag || undefined, // regroupe les notifs similaires au lieu d'empiler
+  };
+
+  e.waitUntil(self.registration.showNotification(titre, options));
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || './';
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientsArr => {
+      const existant = clientsArr.find(c => c.url.includes(self.location.origin));
+      if (existant) return existant.focus();
+      return self.clients.openWindow(url);
+    })
+  );
+});
