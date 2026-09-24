@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Suivi Candidatures-TEST</title>
+<title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -3473,9 +3473,33 @@ async function preparerLettre(btn) {
     return;
   }
 
-  // Priorité 3 : générer via Gemini (Apps Script)
-  btn.textContent = '⏳ Génération...';
+  // Priorité 3 : cache serveur (onglet LettreCache) — évite de rappeler Gemini
+  // si les points existent déjà mais que la colonne H d'Alertes ne les a pas (encore).
+  btn.textContent = '⏳ Vérification...';
   btn.disabled = true;
+  try {
+    const resCache = await fetch(gsUrl('get_lettre_cache',
+      '&metier=' + encodeURIComponent(metier) +
+      '&entreprise=' + encodeURIComponent(entreprise)
+    ));
+    if (resCache.ok) {
+      const dataCache = await resCache.json();
+      if (dataCache.points) {
+        const points = typeof dataCache.points === 'string' ? JSON.parse(dataCache.points) : dataCache.points;
+        if (points && points.length) {
+          lettreCache[cacheKey] = points;
+          card.dataset.points = encodeURIComponent(JSON.stringify(points));
+          afficherBulleLettre(zone, metier, entreprise, points);
+          btn.textContent = '✕ Fermer';
+          btn.disabled = false;
+          return;
+        }
+      }
+    }
+  } catch(e) { /* silencieux : on retente via Gemini ci-dessous si le cache serveur échoue */ }
+
+  // Priorité 4 : générer via Gemini (Apps Script)
+  btn.textContent = '⏳ Génération...';
   zone.innerHTML = '<div class="lettre-bulle"><div class="lettre-loading">✨ Génération en cours...</div></div>';
 
   try {
