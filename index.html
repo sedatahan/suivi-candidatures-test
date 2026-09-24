@@ -3445,6 +3445,7 @@ async function preparerLettre(btn) {
   const zone = card.querySelector('.lettre-bulle-zone');
   const metier = card.dataset.metier || '';
   const entreprise = card.dataset.entreprise || '';
+  const lien = card.dataset.lien || ''; // identifiant stable de l'annonce, utilisé comme clé de cache
 
   // Toggle : si bulle déjà ouverte, la fermer
   if (zone.innerHTML.trim()) {
@@ -3465,8 +3466,9 @@ async function preparerLettre(btn) {
     } catch(e) {}
   }
 
-  // Priorité 2 : cache local session
-  const cacheKey = metier + '||' + entreprise;
+  // Priorité 2 : cache local session (clé = lien de l'annonce, stable même si le
+  // texte du métier change entre-temps, par ex. après une normalisation)
+  const cacheKey = lien || (metier + '||' + entreprise);
   if (lettreCache[cacheKey]) {
     afficherBulleLettre(zone, metier, entreprise, lettreCache[cacheKey]);
     btn.textContent = '✕ Fermer';
@@ -3479,6 +3481,7 @@ async function preparerLettre(btn) {
   btn.disabled = true;
   try {
     const resCache = await fetch(gsUrl('get_lettre_cache',
+      '&lien=' + encodeURIComponent(lien) +
       '&metier=' + encodeURIComponent(metier) +
       '&entreprise=' + encodeURIComponent(entreprise)
     ));
@@ -3503,10 +3506,11 @@ async function preparerLettre(btn) {
   zone.innerHTML = '<div class="lettre-bulle"><div class="lettre-loading">✨ Génération en cours...</div></div>';
 
   try {
-    const points = await genererPointsLettre(metier, entreprise);
+    const points = await genererPointsLettre(metier, entreprise, lien);
     lettreCache[cacheKey] = points;
     // Sauvegarder dans le Sheet LettreCache en arrière-plan
     fetch(gsUrl('save_lettre_cache',
+      '&lien=' + encodeURIComponent(lien) +
       '&metier=' + encodeURIComponent(metier) +
       '&entreprise=' + encodeURIComponent(entreprise) +
       '&points=' + encodeURIComponent(JSON.stringify(points))
@@ -3522,14 +3526,15 @@ async function preparerLettre(btn) {
   btn.disabled = false;
 }
 
-// Cache local : clé = "metier||entreprise", valeur = points générés
+// Cache local : clé = lien de l'annonce (ou métier||entreprise en repli)
 const lettreCache = {};
 
-async function genererPointsLettre(metier, entreprise) {
+async function genererPointsLettre(metier, entreprise, lien) {
   // Appel au Apps Script qui appelle Gemini côté serveur (clé protégée)
   const res = await fetch(gsUrl('generate_lettre',
     '&metier=' + encodeURIComponent(metier) +
-    '&entreprise=' + encodeURIComponent(entreprise)
+    '&entreprise=' + encodeURIComponent(entreprise) +
+    '&lien=' + encodeURIComponent(lien || '')
   ));
   if (!res.ok) throw new Error('Erreur serveur ' + res.status);
   const data = await res.json();
@@ -3743,6 +3748,7 @@ function renderAlerteCard(a, isArchive) {
   const lieuSafe = (a.lieu || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const idSafe = (a.id_mail || '').replace(/'/g, "\\'");
   const dateAffichee = formatAlertDate(a.date_mail);
+  const lienSafe = (a.lien || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const pointsData = a.points ? encodeURIComponent(JSON.stringify(a.points)) : '';
 
   // Badge logo source
@@ -3766,7 +3772,7 @@ function renderAlerteCard(a, isArchive) {
     liensBtns.push(`<a href="${a.lien2}" target="_blank" rel="noopener" class="alerte-btn-link">${label2}</a>`);
   }
 
-  return `<div class="alerte-card${isArchive ? '" style="opacity:0.75' : ''}" data-points="${pointsData}" data-metier="${metierSafe}" data-entreprise="${entrepriseSafe}">
+  return `<div class="alerte-card${isArchive ? '" style="opacity:0.75' : ''}" data-points="${pointsData}" data-metier="${metierSafe}" data-entreprise="${entrepriseSafe}" data-lien="${lienSafe}">
     <div class="alerte-card-header">
       <div class="alerte-metier">${a.metier || '—'}</div>
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
