@@ -52,6 +52,9 @@
   --m-entretien-bg: oklch(88% 0.048 255); --m-entretien-text: oklch(27% 0.115 255);
   --m-reportee-bg: oklch(90% 0.045 75); --m-reportee-text: oklch(40% 0.085 75);
   --m-refus-bg: oklch(93% 0.040 25); --m-refus-text: oklch(38% 0.125 25);
+  --m-amber-soft: oklch(93% 0.06 75);
+  --m-amber: oklch(52% 0.14 75);
+  --m-amber-ink: oklch(32% 0.09 75);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -1298,9 +1301,9 @@ tr:last-child td { border-bottom: none; }
 .mdash-wrap {
   flex: 1; width: 100%; max-width: 480px; margin: 0 auto;
   padding: 20px 16px calc(96px + var(--safe-bottom));
-  padding-top: calc(20px + var(--safe-top));
+  padding-top: calc(40px + var(--safe-top));
 }
-.mdash-header { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 28px; }
+.mdash-header { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 24px; }
 .mdash-logo {
   font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.06em;
   color: var(--m-accent); background: var(--m-accent-soft);
@@ -1308,27 +1311,47 @@ tr:last-child td { border-bottom: none; }
 }
 .mdash-hello { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 22px; color: var(--m-ink); }
 .mdash-date { font-family: 'Public Sans', sans-serif; font-size: 13px; color: var(--m-ink-soft); margin-top: 2px; text-transform: capitalize; }
-.mdash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.mdash-stats-row {
+  display: flex; margin-bottom: 24px; padding: 14px 4px;
+  background: var(--m-surface); border: 1px solid var(--m-border); border-radius: var(--m-radius);
+}
+.mdash-stat { flex: 1; text-align: center; padding: 0 4px; border-right: 1px solid var(--m-border); }
+.mdash-stat:last-child { border-right: none; }
+.mdash-stat-num { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 19px; color: var(--m-ink); }
+.mdash-stat-lbl { font-family: 'Public Sans', sans-serif; font-size: 10.5px; color: var(--m-ink-soft); margin-top: 2px; }
+
+.mdash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
 .mdash-tile {
   position: relative;
   display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between;
-  gap: 12px; min-height: 112px; padding: 16px;
+  gap: 12px; min-height: 104px; padding: 16px;
   background: var(--m-surface); border: 1px solid var(--m-border); border-radius: var(--m-radius);
   cursor: pointer; text-align: left;
   transition: transform 0.15s var(--m-ease);
 }
 .mdash-tile:active { transform: scale(0.97); }
-.mdash-tile-relances { background: var(--m-accent-soft); border-color: var(--m-accent); }
-.mdash-icon { width: 26px; height: 26px; color: var(--m-ink-soft); }
+.mdash-tile-annonces { grid-column: 1 / -1; flex-direction: row; align-items: center; min-height: 64px; }
+.mdash-tile-relances { background: var(--m-amber-soft); border-color: var(--m-amber); }
+.mdash-icon { width: 26px; height: 26px; color: var(--m-ink-soft); flex-shrink: 0; }
 .mdash-icon svg { width: 100%; height: 100%; stroke: currentColor; fill: none; }
-.mdash-tile-relances .mdash-icon { color: var(--m-accent); }
+.mdash-tile-relances .mdash-icon { color: var(--m-amber-ink); }
 .mdash-label { font-family: 'Public Sans', sans-serif; font-weight: 500; font-size: 14px; color: var(--m-ink); line-height: 1.3; }
 .mdash-badge {
   position: absolute; top: 12px; right: 12px; min-width: 22px; height: 22px; padding: 0 6px;
-  border-radius: 11px; background: var(--m-accent); color: #fff;
+  border-radius: 11px; background: var(--m-amber); color: #fff;
   font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
 }
+.mdash-add-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 56px; margin-top: 6px;
+  background: var(--m-accent); color: #fff; border: none; border-radius: var(--m-radius);
+  font-family: 'Public Sans', sans-serif; font-weight: 600; font-size: 16px; cursor: pointer;
+  transition: transform 0.15s var(--m-ease);
+}
+.mdash-add-btn:active { transform: scale(0.98); }
+.mdash-add-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; flex-shrink: 0; }
 
 /* ── Écran Mes candidatures (mobile) — l'habillage desktop existant reste intact au-delà de 480px ── */
 .mcand-header-m, .mcand-relance-chip-m, .mcand-fab-m { display: none; }
@@ -1340,7 +1363,7 @@ tr:last-child td { border-bottom: none; }
   #youth-search-wrap { display: none; }
   #youth-filter-wrap { display: none; }
   #youth-type-filter-bar { display: none; }
-  #screen-youth .youth-body { padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(100px + var(--safe-bottom)); }
+  #screen-youth .youth-body { padding-top: calc(28px + var(--safe-top)); padding-bottom: calc(100px + var(--safe-bottom)); }
 
   .mcand-header-m { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .mcand-title-m { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 18px; color: var(--m-ink); }
@@ -1376,9 +1399,9 @@ tr:last-child td { border-bottom: none; }
 
   #screen-youth, #screen-youth .youth-body { background: var(--m-bg); }
   #screen-youth .badge-Envoyée    { background: var(--m-envoyee-bg);   color: var(--m-envoyee-text); }
-  #screen-youth .badge-Relancée   { background: var(--m-relancee-bg);  color: var(--m-relancee-text); }
+  #screen-youth .badge-Relancée   { background: var(--relancee-bg);    color: var(--relancee-text); }
   #screen-youth .badge-Entretien  { background: var(--m-entretien-bg); color: var(--m-entretien-text); }
-  #screen-youth .badge-Reportée   { background: var(--m-reportee-bg);  color: var(--m-reportee-text); }
+  #screen-youth .badge-Reportée   { background: var(--reportee-bg);    color: var(--reportee-text); }
   #screen-youth .badge-Refus      { background: var(--m-refus-bg);     color: var(--m-refus-text); }
   #screen-youth .badge::before { background: currentColor; opacity: 0.55; }
   #screen-youth .badge { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; }
@@ -1394,12 +1417,24 @@ tr:last-child td { border-bottom: none; }
   #screen-youth .kanban-col-header { font-family: 'Space Grotesk', sans-serif; }
   #screen-youth .empty-title { font-family: 'Space Grotesk', sans-serif; color: var(--m-ink); }
   #screen-youth .empty-text  { font-family: 'Public Sans', sans-serif; color: var(--m-ink-soft); }
+
+  /* Mise en évidence renforcée des candidatures à relancer / reportées (couleur trop subtile en version desktop) */
+  #screen-youth .cand-card.followup, #screen-youth .bloc-card.followup, #screen-youth .kanban-card.followup {
+    border: 2px solid #F59E0B;
+    background: #FFF8E6;
+    box-shadow: none;
+  }
+  #screen-youth .cand-card.rappel-due, #screen-youth .bloc-card.rappel-due, #screen-youth .kanban-card.rappel-due {
+    border: 2px solid var(--reportee-dot);
+    background: var(--reportee-bg);
+    box-shadow: none;
+  }
 }
 
 /* ── Écran Annonces (mobile) — habillage visuel uniquement, logique inchangée ── */
 @media (max-width: 480px) {
   #screen-alertes .alertes-back-btn { display: none; }
-  #screen-alertes .alertes-header { background: var(--m-surface); border-color: var(--m-border); }
+  #screen-alertes .alertes-header { background: var(--m-surface); border-color: var(--m-border); padding-top: calc(24px + var(--safe-top)); }
   #screen-alertes .alertes-header > div > div:first-child { font-family: 'Space Grotesk', sans-serif; color: var(--m-ink); }
   #screen-alertes #alertes-sub { font-family: 'Public Sans', sans-serif; color: var(--m-ink-soft); }
   #screen-alertes, #screen-alertes .alertes-body { background: var(--m-bg); }
@@ -1430,7 +1465,7 @@ tr:last-child td { border-bottom: none; }
 .mprofil-wrap {
   flex: 1; width: 100%; max-width: 480px; margin: 0 auto;
   padding: 20px 16px calc(96px + var(--safe-bottom));
-  padding-top: calc(20px + var(--safe-top));
+  padding-top: calc(28px + var(--safe-top));
 }
 .mprofil-header { margin-bottom: 8px; }
 .mprofil-name { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 20px; color: var(--m-ink); }
@@ -1446,9 +1481,27 @@ tr:last-child td { border-bottom: none; }
 .mprofil-stat:last-child { border-right: none; }
 .mprofil-stat-num { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 22px; color: var(--m-ink); }
 .mprofil-stat-lbl { font-family: 'Public Sans', sans-serif; font-size: 12px; color: var(--m-ink-soft); margin-top: 4px; }
-.mprofil-favoris-list { display: flex; flex-direction: column; gap: 10px; }
-.mprofil-favori-item { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 2px; }
-.mprofil-favori-item a { font-family: 'Public Sans', sans-serif; font-size: 14px; color: var(--m-accent); text-decoration: none; font-weight: 500; }
+.mprofil-chart-wrap { margin-top: 18px; }
+.mprofil-chart-labels {
+  display: flex; justify-content: space-between; margin-top: 4px;
+  font-family: 'Public Sans', sans-serif; font-size: 10.5px; color: var(--m-ink-soft); text-transform: capitalize;
+}
+.mprofil-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.mprofil-edit-btn {
+  width: 32px; height: 32px; min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--m-ink-soft); cursor: pointer;
+  margin-right: -6px;
+}
+.mprofil-edit-btn svg { width: 18px; height: 18px; }
+.mprofil-favoris-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.mprofil-favori-pill {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px;
+  padding: 0 14px; border-radius: 20px;
+  background: var(--m-accent-soft); color: var(--m-accent);
+  font-family: 'Public Sans', sans-serif; font-size: 14px; font-weight: 500; text-decoration: none;
+}
+.mprofil-favori-pill svg { width: 14px; height: 14px; flex-shrink: 0; }
 .mprofil-favoris-empty { font-family: 'Public Sans', sans-serif; font-size: 14px; color: var(--m-ink-soft); }
 .mprofil-export-btn {
   width: 100%; min-height: 44px; border: 1px solid var(--m-border); border-radius: var(--m-radius);
@@ -1469,12 +1522,8 @@ tr:last-child td { border-bottom: none; }
 }
 .mprofil-switch input:checked + .mprofil-switch-track { background: var(--m-accent); }
 .mprofil-switch input:checked + .mprofil-switch-track::after { transform: translateX(18px); }
-.mprofil-switch input:disabled + .mprofil-switch-track { opacity: 0.5; }
-.mprofil-secondary-btn {
-  margin-top: 16px; background: none; border: none; color: var(--m-ink-soft);
-  font-family: 'Public Sans', sans-serif; font-size: 13px; text-decoration: underline;
-  cursor: pointer; padding: 8px 0; min-height: 44px;
-}
+.mprofil-switch input:disabled + .mprofil-switch-track { opacity: 0.5; cursor: not-allowed; }
+.mprofil-switch input:disabled { cursor: not-allowed; }
 
 @media (prefers-reduced-motion: reduce) {
   .mdash-tile, .mcand-fab-m, .mcand-viewbtn-m, .mprofil-switch-track, .mprofil-switch-track::after {
@@ -1606,11 +1655,15 @@ tr:last-child td { border-bottom: none; }
         <div class="mdash-date" id="mdash-date"></div>
       </div>
     </div>
+
+    <div class="mdash-stats-row" id="mdash-stats">
+      <div class="mdash-stat"><div class="mdash-stat-num" id="mdstat-envoyee">0</div><div class="mdash-stat-lbl">Envoyées</div></div>
+      <div class="mdash-stat"><div class="mdash-stat-num" id="mdstat-entretien">0</div><div class="mdash-stat-lbl">Entretiens</div></div>
+      <div class="mdash-stat"><div class="mdash-stat-num" id="mdstat-reportee">0</div><div class="mdash-stat-lbl">Reportées</div></div>
+      <div class="mdash-stat"><div class="mdash-stat-num" id="mdstat-refus">0</div><div class="mdash-stat-lbl">Refus</div></div>
+    </div>
+
     <div class="mdash-grid">
-      <button class="mdash-tile" onclick="openModal()">
-        <span class="mdash-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
-        <span class="mdash-label">Ajouter une candidature</span>
-      </button>
       <button class="mdash-tile" onclick="goMobile('youth')">
         <span class="mdash-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="14" y2="18"></line></svg></span>
         <span class="mdash-label">Mes candidatures</span>
@@ -1620,11 +1673,16 @@ tr:last-child td { border-bottom: none; }
         <span class="mdash-label">Relances</span>
         <span class="mdash-badge" id="mdash-relances-badge" style="display:none">0</span>
       </button>
-      <button class="mdash-tile" onclick="goMobile('alertes')">
+      <button class="mdash-tile mdash-tile-annonces" onclick="goMobile('alertes')">
         <span class="mdash-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></span>
         <span class="mdash-label">Annonces</span>
       </button>
     </div>
+
+    <button class="mdash-add-btn" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      Ajouter une candidature
+    </button>
   </div>
 </div>
 
@@ -1746,10 +1804,17 @@ tr:last-child td { border-bottom: none; }
         <div class="mprofil-stat"><div class="mprofil-stat-num" id="mpstat-reportee">0</div><div class="mprofil-stat-lbl">Reportées</div></div>
         <div class="mprofil-stat"><div class="mprofil-stat-num" id="mpstat-refus">0</div><div class="mprofil-stat-lbl">Refus</div></div>
       </div>
+      <div class="mprofil-chart-wrap" id="mprofil-chart-svg"></div>
+      <div class="mprofil-chart-labels" id="mprofil-chart-labels"></div>
     </div>
 
     <div class="mprofil-section">
-      <div class="mprofil-section-title">Mes projets favoris</div>
+      <div class="mprofil-section-head">
+        <div class="mprofil-section-title" style="margin-bottom:0">Mes projets favoris</div>
+        <button class="mprofil-edit-btn" onclick="openFavorisModal()" aria-label="Modifier mes projets favoris">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+        </button>
+      </div>
       <div id="mprofil-favoris-list" class="mprofil-favoris-list"></div>
     </div>
 
@@ -1779,7 +1844,6 @@ tr:last-child td { border-bottom: none; }
           <span class="mprofil-switch-track"></span>
         </label>
       </div>
-      <button class="mprofil-secondary-btn" onclick="openFavorisModal()">Projet défini</button>
     </div>
   </div>
 </div>
@@ -2454,6 +2518,7 @@ async function updatePushButtonState() {
   if (!btn || !('serviceWorker' in navigator) || !('PushManager' in window)) {
     if (btn) btn.style.display = 'none';
     if (mainToggle) mainToggle.disabled = true;
+    setNotifSubTogglesDisabled(true);
     return;
   }
   try {
@@ -2468,6 +2533,7 @@ async function updatePushButtonState() {
       btn.title = 'Activer les rappels';
       if (mainToggle) mainToggle.checked = false;
     }
+    setNotifSubTogglesDisabled(!sub);
   } catch (err) { /* silencieux : l'état reste par défaut */ }
 }
 
@@ -2871,6 +2937,62 @@ function updateDashboardBadge() {
   }
 }
 
+function computeBasicStats(items) {
+  const nb = (s) => items.filter(i => i.statut === s).length;
+  return { envoyee: nb('Envoyée'), entretien: nb('Entretien'), reportee: nb('Reportée'), refus: nb('Refus') };
+}
+
+function fillBasicStats(prefix, stats) {
+  const setNum = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setNum(prefix + 'stat-envoyee', stats.envoyee);
+  setNum(prefix + 'stat-entretien', stats.entretien);
+  setNum(prefix + 'stat-reportee', stats.reportee);
+  setNum(prefix + 'stat-refus', stats.refus);
+}
+
+// Courbe simple du nombre de candidatures ajoutées par mois (6 derniers mois)
+function buildCandidatureTrend(items) {
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ label: d.toLocaleDateString('fr-CH', { month: 'short' }), year: d.getFullYear(), month: d.getMonth(), count: 0 });
+  }
+  items.forEach(item => {
+    if (!item.date_ajout) return;
+    const d = new Date(item.date_ajout);
+    if (isNaN(d)) return;
+    const m = months.find(mo => mo.year === d.getFullYear() && mo.month === d.getMonth());
+    if (m) m.count++;
+  });
+  const maxVal = Math.max(...months.map(m => m.count), 1);
+  const w = 280, h = 64, padX = 6, padY = 8;
+  const stepX = (w - padX * 2) / (months.length - 1);
+  const pts = months.map((m, i) => ({
+    x: padX + i * stepX,
+    y: h - padY - (m.count / maxVal) * (h - padY * 2),
+    count: m.count
+  }));
+  const line = pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+  const dots = pts.map(p =>
+    '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="var(--m-accent)"></circle>'
+  ).join('');
+  const svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" style="width:100%;height:64px;display:block;overflow:visible">'
+    + '<polyline points="' + line + '" fill="none" stroke="var(--m-accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>'
+    + dots + '</svg>';
+  const labels = months.map(m => '<span>' + m.label + '</span>').join('');
+  return { svg, labels };
+}
+
+function renderCandidatureTrendInto(svgId, labelsId, items) {
+  const svgEl = document.getElementById(svgId);
+  const labelsEl = document.getElementById(labelsId);
+  if (!svgEl || !labelsEl) return;
+  const trend = buildCandidatureTrend(items);
+  svgEl.innerHTML = trend.svg;
+  labelsEl.innerHTML = trend.labels;
+}
+
 function renderDashboardMobile() {
   const hello = document.getElementById('mdash-hello');
   if (hello) {
@@ -2881,6 +3003,7 @@ function renderDashboardMobile() {
   if (dateEl) {
     dateEl.textContent = new Date().toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' });
   }
+  fillBasicStats('md', computeBasicStats(allData[currentUser] || []));
   updateDashboardBadge();
 }
 
@@ -2891,12 +3014,8 @@ function renderProfilMobile() {
   const codeEl = document.getElementById('mprofil-code');
   if (codeEl) codeEl.textContent = currentUser || '—';
 
-  const nb = (s) => items.filter(i => i.statut === s).length;
-  const setNum = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setNum('mpstat-envoyee', nb('Envoyée'));
-  setNum('mpstat-entretien', nb('Entretien'));
-  setNum('mpstat-reportee', nb('Reportée'));
-  setNum('mpstat-refus', nb('Refus'));
+  fillBasicStats('mp', computeBasicStats(items));
+  renderCandidatureTrendInto('mprofil-chart-svg', 'mprofil-chart-labels', items);
 
   const list = document.getElementById('mprofil-favoris-list');
   if (list) {
@@ -2904,8 +3023,10 @@ function renderProfilMobile() {
       list.innerHTML = '<div class="mprofil-favoris-empty">Aucun projet favori défini.</div>';
     } else {
       list.innerHTML = youthFavoris.map(m =>
-        '<div class="mprofil-favori-item"><span>' + m + '</span>'
-        + '<a href="' + orientationUrl(m) + '" target="_blank" rel="noopener">Fiche métier ↗</a></div>'
+        '<a class="mprofil-favori-pill" href="' + orientationUrl(m) + '" target="_blank" rel="noopener">'
+        + '<span>' + m + '</span>'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>'
+        + '</a>'
       ).join('');
     }
   }
@@ -2915,6 +3036,13 @@ function renderProfilMobile() {
 }
 
 // ── PRÉFÉRENCES NOTIFICATIONS (mobile) ───────────────────────────────────────
+function setNotifSubTogglesDisabled(disabled) {
+  const relEl = document.getElementById('mprofil-notif-relances');
+  const placesEl = document.getElementById('mprofil-notif-places');
+  if (relEl) relEl.disabled = disabled;
+  if (placesEl) placesEl.disabled = disabled;
+}
+
 function loadMobileNotifPrefs() {
   let prefs = { relances: true, places: true };
   try {
@@ -2925,6 +3053,8 @@ function loadMobileNotifPrefs() {
   const placesEl = document.getElementById('mprofil-notif-places');
   if (relEl) relEl.checked = prefs.relances;
   if (placesEl) placesEl.checked = prefs.places;
+  const mainEl = document.getElementById('mprofil-notif-main');
+  setNotifSubTogglesDisabled(!(mainEl && mainEl.checked));
 }
 
 function saveMobileNotifPrefs() {
@@ -2936,8 +3066,11 @@ function saveMobileNotifPrefs() {
 
 async function toggleMainNotifMobile() {
   await togglePushSubscription();
-  updatePushButtonState();
+  await updatePushButtonState();
+  const mainEl = document.getElementById('mprofil-notif-main');
+  setNotifSubTogglesDisabled(!(mainEl && mainEl.checked));
 }
+
 
 // ── YOUTH RENDER ─────────────────────────────────────────────────────────────
 function renderYouth() {
