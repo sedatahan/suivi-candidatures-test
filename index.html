@@ -3445,7 +3445,7 @@ async function preparerLettre(btn) {
   const zone = card.querySelector('.lettre-bulle-zone');
   const metier = card.dataset.metier || '';
   const entreprise = card.dataset.entreprise || '';
-  const lien = card.dataset.lien || ''; // identifiant stable de l'annonce, utilisé comme clé de cache
+  const lien = card.dataset.lien || '';
 
   // Toggle : si bulle déjà ouverte, la fermer
   if (zone.innerHTML.trim()) {
@@ -3454,7 +3454,7 @@ async function preparerLettre(btn) {
     return;
   }
 
-  // Priorité 1 : points déjà dans la carte (depuis le Sheet via get_alertes)
+  // Priorité 1 : points déjà dans la carte (depuis le Sheet, colonne H d'Alertes, via get_alertes)
   if (card.dataset.points) {
     try {
       const points = JSON.parse(decodeURIComponent(card.dataset.points));
@@ -3466,8 +3466,8 @@ async function preparerLettre(btn) {
     } catch(e) {}
   }
 
-  // Priorité 2 : cache local session (clé = lien de l'annonce, stable même si le
-  // texte du métier change entre-temps, par ex. après une normalisation)
+  // Priorité 2 : cache local à la session (évite de rappeler Gemini plusieurs fois
+  // pendant la même visite si la carte n'a pas été rechargée depuis le Sheet)
   const cacheKey = lien || (metier + '||' + entreprise);
   if (lettreCache[cacheKey]) {
     afficherBulleLettre(zone, metier, entreprise, lettreCache[cacheKey]);
@@ -3475,46 +3475,15 @@ async function preparerLettre(btn) {
     return;
   }
 
-  // Priorité 3 : cache serveur (onglet LettreCache) — évite de rappeler Gemini
-  // si les points existent déjà mais que la colonne H d'Alertes ne les a pas (encore).
-  btn.textContent = '⏳ Vérification...';
-  btn.disabled = true;
-  try {
-    const resCache = await fetch(gsUrl('get_lettre_cache',
-      '&lien=' + encodeURIComponent(lien) +
-      '&metier=' + encodeURIComponent(metier) +
-      '&entreprise=' + encodeURIComponent(entreprise)
-    ));
-    if (resCache.ok) {
-      const dataCache = await resCache.json();
-      if (dataCache.points) {
-        const points = typeof dataCache.points === 'string' ? JSON.parse(dataCache.points) : dataCache.points;
-        if (points && points.length) {
-          lettreCache[cacheKey] = points;
-          card.dataset.points = encodeURIComponent(JSON.stringify(points));
-          afficherBulleLettre(zone, metier, entreprise, points);
-          btn.textContent = '✕ Fermer';
-          btn.disabled = false;
-          return;
-        }
-      }
-    }
-  } catch(e) { /* silencieux : on retente via Gemini ci-dessous si le cache serveur échoue */ }
-
-  // Priorité 4 : générer via Gemini (Apps Script)
+  // Priorité 3 : générer via Gemini (Apps Script) — le résultat est sauvegardé
+  // directement dans la colonne H d'Alertes côté serveur.
   btn.textContent = '⏳ Génération...';
+  btn.disabled = true;
   zone.innerHTML = '<div class="lettre-bulle"><div class="lettre-loading">✨ Génération en cours...</div></div>';
 
   try {
     const points = await genererPointsLettre(metier, entreprise, lien);
     lettreCache[cacheKey] = points;
-    // Sauvegarder dans le Sheet LettreCache en arrière-plan
-    fetch(gsUrl('save_lettre_cache',
-      '&lien=' + encodeURIComponent(lien) +
-      '&metier=' + encodeURIComponent(metier) +
-      '&entreprise=' + encodeURIComponent(entreprise) +
-      '&points=' + encodeURIComponent(JSON.stringify(points))
-    )).catch(() => {});
     afficherBulleLettre(zone, metier, entreprise, points);
     // Mettre à jour le data-attribute pour les prochains clics
     card.dataset.points = encodeURIComponent(JSON.stringify(points));
@@ -3526,11 +3495,12 @@ async function preparerLettre(btn) {
   btn.disabled = false;
 }
 
-// Cache local : clé = lien de l'annonce (ou métier||entreprise en repli)
+// Cache local à la session (évite les doubles appels pendant la même visite)
 const lettreCache = {};
 
 async function genererPointsLettre(metier, entreprise, lien) {
-  // Appel au Apps Script qui appelle Gemini côté serveur (clé protégée)
+  // Appel au Apps Script qui appelle Gemini côté serveur (clé protégée) et
+  // sauvegarde directement dans la colonne H de l'onglet Alertes.
   const res = await fetch(gsUrl('generate_lettre',
     '&metier=' + encodeURIComponent(metier) +
     '&entreprise=' + encodeURIComponent(entreprise) +
