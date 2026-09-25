@@ -1,6 +1,6 @@
 // ── SERVICE WORKER — CAP Candidatures ────────────────────────────────────────
 // Cache minimal : assets statiques seulement
-const CACHE_NAME = 'cap-20260925-1508';
+const CACHE_NAME = 'cap-20260925-1519';
 const ASSETS = ['./'];
 
 self.addEventListener('install', e => {
