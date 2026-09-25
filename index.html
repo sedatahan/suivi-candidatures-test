@@ -1905,14 +1905,14 @@ tr:last-child td { border-bottom: none; }
           <span class="mprofil-switch-track"></span>
         </label>
       </div>
-      <div class="mprofil-toggle-row mprofil-toggle-sub">
+      <div class="mprofil-toggle-row mprofil-toggle-sub" id="mprofil-notif-relances-row">
         <span>Relances</span>
         <label class="mprofil-switch">
           <input type="checkbox" id="mprofil-notif-relances" onchange="saveMobileNotifPrefs()">
           <span class="mprofil-switch-track"></span>
         </label>
       </div>
-      <div class="mprofil-toggle-row mprofil-toggle-sub">
+      <div class="mprofil-toggle-row mprofil-toggle-sub" id="mprofil-notif-places-row">
         <span>Nouvelles places</span>
         <label class="mprofil-switch">
           <input type="checkbox" id="mprofil-notif-places" onchange="saveMobileNotifPrefs()">
@@ -3116,10 +3116,10 @@ function renderProfilMobile() {
 
 // ── PRÉFÉRENCES NOTIFICATIONS (mobile) ───────────────────────────────────────
 function setNotifSubTogglesDisabled(disabled) {
-  const relEl = document.getElementById('mprofil-notif-relances');
-  const placesEl = document.getElementById('mprofil-notif-places');
-  if (relEl) relEl.disabled = disabled;
-  if (placesEl) placesEl.disabled = disabled;
+  const relRow = document.getElementById('mprofil-notif-relances-row');
+  const placesRow = document.getElementById('mprofil-notif-places-row');
+  if (relRow) relRow.style.display = disabled ? 'none' : '';
+  if (placesRow) placesRow.style.display = disabled ? 'none' : '';
 }
 
 function lireMobileNotifPrefs() {
