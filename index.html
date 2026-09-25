@@ -3091,7 +3091,7 @@ function renderDashboardMobile() {
   const hello = document.getElementById('mdash-hello');
   if (hello) {
     const nom = (document.getElementById('youth-header-code') || {}).textContent || currentUser || '';
-    hello.textContent = 'Bonjour le sang ' + nom;
+    hello.textContent = 'Bonjour ' + nom;
   }
   const dateEl = document.getElementById('mdash-date');
   if (dateEl) {
@@ -5984,23 +5984,8 @@ initPlaneScene({
 // ── SERVICE WORKER ────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // updateViaCache: 'none' force le navigateur à toujours récupérer sw.js
-    // depuis le réseau, sans jamais utiliser sa version en cache HTTP.
-    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
-      .then(reg => {
-        // Vérification immédiate d'une nouvelle version au chargement.
-        reg.update();
-      })
+    navigator.serviceWorker.register('./sw.js')
       .catch(err => console.log('SW non enregistré:', err));
-  });
-
-  // Dès qu'une nouvelle version prend le contrôle, on recharge la page
-  // automatiquement : plus besoin de fermer complètement l'app.
-  let reloadingDeja = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloadingDeja) return;
-    reloadingDeja = true;
-    window.location.reload();
   });
 }
 </script>
