@@ -2651,9 +2651,13 @@ async function togglePushSubscription() {
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
+    const prefs = lireMobileNotifPrefs();
     await fetch(gsUrl('save_push_subscription'), {
       method: 'POST',
-      body: new URLSearchParams({ code: currentUser, subscription: JSON.stringify(sub) })
+      body: new URLSearchParams({
+        code: currentUser, subscription: JSON.stringify(sub),
+        relances: String(prefs.relances), places: String(prefs.places)
+      })
     });
   } catch (err) {
     showError('Impossible d\'activer les rappels : ' + err.message);
@@ -3118,12 +3122,17 @@ function setNotifSubTogglesDisabled(disabled) {
   if (placesEl) placesEl.disabled = disabled;
 }
 
-function loadMobileNotifPrefs() {
+function lireMobileNotifPrefs() {
   let prefs = { relances: true, places: true };
   try {
     const raw = localStorage.getItem('cap_notif_prefs');
     if (raw) prefs = Object.assign(prefs, JSON.parse(raw));
   } catch (e) {}
+  return prefs;
+}
+
+function loadMobileNotifPrefs() {
+  const prefs = lireMobileNotifPrefs();
   const relEl = document.getElementById('mprofil-notif-relances');
   const placesEl = document.getElementById('mprofil-notif-places');
   if (relEl) relEl.checked = prefs.relances;
@@ -3132,11 +3141,28 @@ function loadMobileNotifPrefs() {
   setNotifSubTogglesDisabled(!(mainEl && mainEl.checked));
 }
 
-function saveMobileNotifPrefs() {
+async function saveMobileNotifPrefs() {
   const relEl = document.getElementById('mprofil-notif-relances');
   const placesEl = document.getElementById('mprofil-notif-places');
   const prefs = { relances: relEl ? relEl.checked : true, places: placesEl ? placesEl.checked : true };
   try { localStorage.setItem('cap_notif_prefs', JSON.stringify(prefs)); } catch (e) {}
+
+  // Répercuter au serveur — sans ça, les push continueraient d'arriver malgré le toggle
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        fetch(gsUrl('update_push_prefs'), {
+          method: 'POST',
+          body: new URLSearchParams({
+            code: currentUser, endpoint: sub.endpoint,
+            relances: String(prefs.relances), places: String(prefs.places)
+          })
+        }).catch(() => {});
+      }
+    }
+  } catch (e) { /* silencieux — la préférence reste au moins enregistrée localement */ }
 }
 
 // Notifie le jeune si de nouvelles places correspondant à ses favoris sont apparues
