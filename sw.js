@@ -1,6 +1,5 @@
 // ── SERVICE WORKER — CAP Candidatures ────────────────────────────────────────
-// Cache minimal : assets statiques seulement
-const CACHE_NAME = 'cap-20260925-1532';
+const CACHE_NAME = 'cap-20260925-1540';
 const ASSETS = ['./'];
 
 self.addEventListener('install', e => {
@@ -25,6 +24,24 @@ self.addEventListener('fetch', e => {
       e.request.url.includes('googleapis.com')) {
     return;
   }
+
+  // Le document HTML (la page elle-même) : toujours privilégier le réseau,
+  // pour que chaque mise à jour d'index.html soit vue au prochain chargement.
+  // Le cache ne sert que de filet de sécurité si le téléphone est hors ligne.
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request)
+        .then(reponse => {
+          const copie = reponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, copie));
+          return reponse;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Le reste (assets statiques) : cache-first comme avant
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
@@ -41,7 +58,7 @@ self.addEventListener('push', e => {
     icon: 'icon-152.png',
     badge: 'icon-152.png',
     data: { url: data.url || './' },
-    tag: data.tag || undefined, // regroupe les notifs similaires au lieu d'empiler
+    tag: data.tag || undefined,
   };
 
   e.waitUntil(self.registration.showNotification(titre, options));
