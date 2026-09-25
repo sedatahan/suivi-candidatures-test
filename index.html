@@ -1359,15 +1359,8 @@ tr:last-child td { border-bottom: none; }
 .mdash-add-btn:active { transform: scale(0.98); }
 .mdash-add-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; flex-shrink: 0; }
 
-.mdash-plane-wrap { flex: 1; display: flex; align-items: center; justify-content: flex-end; min-height: 74px; margin-top: 6px; }
-.plane-scene-dash {
-  position: relative; width: 150px; height: 108px;
-  overflow: hidden; cursor: pointer; user-select: none;
-}
-.plane-scene-dash .plane-ground { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--m-border); }
-.plane-scene-dash .plane-char { position: absolute; bottom: 3px; left: 6px; width: 140px; height: 108px; }
-.plane-scene-dash .plane-flying { position: absolute; width: 32px; height: 19px; opacity: 0; }
-.plane-scene-dash .plane-held { position: absolute; width: 19px; height: 12px; opacity: 0; }
+.mdash-plane-wrap { flex: 1; display: flex; align-items: center; justify-content: flex-end; min-height: 230px; margin-top: 6px; }
+.mdash-plane-inner { width: 100%; max-width: 380px; margin: 0 auto; }
 
 /* ── Écran Mes candidatures (mobile) — l'habillage desktop existant reste intact au-delà de 480px ── */
 .mcand-header-m, .mcand-relance-chip-m, .mcand-fab-m { display: none; }
@@ -1705,7 +1698,8 @@ tr:last-child td { border-bottom: none; }
     </button>
 
     <div class="mdash-plane-wrap">
-      <div class="plane-scene-dash" id="planeSceneDash">
+      <div class="mdash-plane-inner">
+      <div class="plane-scene" id="planeSceneDash">
         <div class="plane-ground"></div>
 
         <svg class="plane-char" id="planeCharSvgDash" viewBox="0 0 220 170">
@@ -1762,6 +1756,7 @@ tr:last-child td { border-bottom: none; }
             <path d="M34 48 L52 38 L46 60 Z"></path>
           </g>
         </svg>
+      </div>
       </div>
     </div>
   </div>
