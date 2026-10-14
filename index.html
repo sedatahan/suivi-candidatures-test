@@ -2655,7 +2655,12 @@ async function togglePushSubscription() {
     });
     await fetch(gsUrl('save_push_subscription'), {
       method: 'POST',
-      body: new URLSearchParams({ code: currentUser, subscription: JSON.stringify(sub) })
+      body: new URLSearchParams({
+        code: currentUser,
+        subscription: JSON.stringify(sub),
+        relances: String(getNotifPrefs().relances),
+        places: String(getNotifPrefs().places)
+      })
     });
   } catch (err) {
     showError('Impossible d\'activer les rappels : ' + err.message);
@@ -3151,43 +3156,57 @@ function loadMobileNotifPrefs() {
   setNotifSubTogglesDisabled(!(mainEl && mainEl.checked));
 }
 
+// Préférences de notification de cet appareil (relances / nouvelles places).
+// Valeurs par défaut : tout activé.
+function getNotifPrefs() {
+  let prefs = { relances: true, places: true };
+  try {
+    const raw = localStorage.getItem('cap_notif_prefs');
+    if (raw) prefs = Object.assign(prefs, JSON.parse(raw));
+  } catch (e) {}
+  return prefs;
+}
+
+// Envoie les préférences au serveur (onglet PushSubscriptions, colonnes relances / places)
+// pour que l'envoi des notifications les respecte. Si l'abonnement n'existe pas encore
+// côté serveur, on l'enregistre avec ces préférences.
+async function syncPushPrefsToServer(prefs) {
+  try {
+    if (!currentUser || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return;
+    const res = await fetch(gsUrl('update_push_prefs'), {
+      method: 'POST',
+      body: new URLSearchParams({
+        code: currentUser,
+        endpoint: sub.endpoint,
+        relances: String(prefs.relances),
+        places: String(prefs.places)
+      })
+    });
+    let ok = true;
+    try { const json = await res.json(); ok = !(json && json.success === false); } catch (e) {}
+    if (!ok) {
+      await fetch(gsUrl('save_push_subscription'), {
+        method: 'POST',
+        body: new URLSearchParams({
+          code: currentUser,
+          subscription: JSON.stringify(sub),
+          relances: String(prefs.relances),
+          places: String(prefs.places)
+        })
+      });
+    }
+  } catch (e) { /* silencieux : les préférences restent enregistrées sur l'appareil */ }
+}
+
 function saveMobileNotifPrefs() {
   const relEl = document.getElementById('mprofil-notif-relances');
   const placesEl = document.getElementById('mprofil-notif-places');
   const prefs = { relances: relEl ? relEl.checked : true, places: placesEl ? placesEl.checked : true };
   try { localStorage.setItem('cap_notif_prefs', JSON.stringify(prefs)); } catch (e) {}
-}
-
-// Notifie le jeune si de nouvelles places correspondant à ses favoris sont apparues
-// depuis sa dernière visite (vérifié à l'ouverture de l'app / rechargement des annonces).
-function checkNewPlacesNotification(fetchedAlertes) {
-  try {
-    if (!currentUser || !Array.isArray(fetchedAlertes) || !fetchedAlertes.length) return;
-    let prefs = { places: true };
-    try {
-      const raw = localStorage.getItem('cap_notif_prefs');
-      if (raw) prefs = Object.assign(prefs, JSON.parse(raw));
-    } catch (e) {}
-    if (prefs.places === false) return;
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
-
-    const seenKey = 'cap_alertes_vues_' + currentUser;
-    let seen = [];
-    try { seen = JSON.parse(localStorage.getItem(seenKey) || '[]'); } catch (e) {}
-    const seenSet = new Set(seen);
-    const nouvelles = fetchedAlertes.filter(a => a.id_mail && !seenSet.has(a.id_mail));
-
-    if (nouvelles.length > 0 && seen.length > 0) {
-      const titre = nouvelles.length === 1 ? 'Nouvelle place disponible' : nouvelles.length + ' nouvelles places disponibles';
-      const corps = nouvelles.length === 1
-        ? (nouvelles[0].metier || 'Une nouvelle annonce correspond à vos favoris.')
-        : 'De nouvelles annonces correspondent à vos favoris.';
-      try { new Notification(titre, { body: corps }); } catch (e) {}
-    }
-
-    const allIds = fetchedAlertes.map(a => a.id_mail).filter(Boolean);
-    localStorage.setItem(seenKey, JSON.stringify(allIds));
-  } catch (e) { /* silencieux — non critique */ }
+  syncPushPrefsToServer(prefs);
 }
 
 async function toggleMainNotifMobile() {
@@ -4337,7 +4356,6 @@ async function prechargerAlertes(code) {
     const postulee = await resPostulees.json();
     alertesData = Array.isArray(annonces) ? annonces : [];
     alertesPostulees = new Set(Array.isArray(postulee) ? postulee : []);
-    checkNewPlacesNotification(alertesData);
     updateDashboardBadge();
     // Mettre à jour la pastille
     const actives = alertesData.filter(a => !alertesPostulees.has(a.id_mail));
@@ -4397,7 +4415,6 @@ async function loadAlertes() {
 
     alertesData = annonces;
     alertesPostulees = new Set(Array.isArray(postulee) ? postulee : []);
-    checkNewPlacesNotification(alertesData);
     updateDashboardBadge();
 
     renderAlertesView();
