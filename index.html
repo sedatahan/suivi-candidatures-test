@@ -1360,6 +1360,18 @@ tr:last-child td { border-bottom: none; }
 .mdash-add-btn:active { transform: scale(0.98); }
 .mdash-add-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; flex-shrink: 0; }
 
+.mdash-favoris-banner {
+  display: none; align-items: center; gap: 12px; width: 100%;
+  margin: 0 0 10px; padding: 10px 12px; text-align: left;
+  background: var(--m-accent-soft, var(--m-card)); color: var(--m-ink);
+  border: 1px solid var(--m-accent); border-radius: var(--m-radius); cursor: pointer;
+  font-family: 'Public Sans', sans-serif;
+}
+.mdash-favoris-banner.show { display: flex; }
+.mdash-favoris-text { flex: 1; font-size: 12.5px; line-height: 1.4; color: var(--m-ink-soft); }
+.mdash-favoris-text strong { display: block; font-size: 14px; font-weight: 600; color: var(--m-ink); margin-bottom: 2px; }
+.mdash-favoris-cta { flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--m-accent); display: flex; align-items: center; gap: 4px; }
+.mdash-favoris-cta svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
 .mdash-plane-wrap { flex: 1; display: flex; align-items: center; justify-content: flex-end; min-height: 230px; margin-top: 6px; }
 .mdash-plane-inner { width: 100%; max-width: 380px; margin: 0 auto; }
 
@@ -1694,6 +1706,14 @@ tr:last-child td { border-bottom: none; }
       </button>
     </div>
 
+    <button class="mdash-favoris-banner" id="mdash-favoris-banner" onclick="openFavorisModal()">
+      <span class="mdash-favoris-text">
+        <strong>Définissez vos projets</strong>
+        Choisissez jusqu'à 3 métiers favoris : vous recevrez une notification dès qu'une nouvelle place paraît.
+      </span>
+      <span class="mdash-favoris-cta">Définir<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+    </button>
+
     <button class="mdash-add-btn" onclick="openModal()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
       Ajouter une candidature
@@ -1805,7 +1825,7 @@ tr:last-child td { border-bottom: none; }
     <div id="favoris-banner" class="favoris-banner" style="display:none">
       <div style="flex:1;line-height:1.5">
         <strong>Aucun projet défini</strong><br>
-        <span style="font-size:12px;opacity:0.85">Ajoutez jusqu'à 3 métiers favoris pour les retrouver en tête de liste lors de vos candidatures.</span>
+        <span style="font-size:12px;opacity:0.85">Ajoutez jusqu'à 3 métiers favoris : ils seront en tête de liste et vous recevrez une notification pour les nouvelles places.</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
         <button class="favoris-banner-btn" onclick="openFavorisModal()">Définir mes projets</button>
@@ -2913,7 +2933,7 @@ async function loginCounselor() {
 }
 
 function logout() {
-  currentUser = null; currentRole = null; currentConseiller = null; youthConseiller = ''; allData = {}; youthFilter = 'all'; youthFavoris = []; favorisBannerDismissed = false; mobileOnlyRelances = false;
+  currentUser = null; currentRole = null; currentConseiller = null; youthConseiller = ''; allData = {}; youthFilter = 'all'; youthFavoris = []; alertesData = []; alertesPostulees = new Set(); favorisBannerDismissed = false; mobileOnlyRelances = false;
   alertesData = []; alertesPostulees = new Set();
   clearSession();
   showScreen('login');
@@ -3104,6 +3124,13 @@ function renderDashboardMobile() {
   }
   fillBasicStats('md', computeBasicStats(allData[currentUser] || []));
   updateDashboardBadge();
+  updateDashFavorisBanner();
+}
+
+// Bande « Définissez vos projets » : visible seulement sans métier favori
+function updateDashFavorisBanner() {
+  const b = document.getElementById('mdash-favoris-banner');
+  if (b) b.classList.toggle('show', youthFavoris.length === 0);
 }
 
 function renderProfilMobile() {
@@ -4346,6 +4373,14 @@ function afficherBulleLettre(zone, metier, entreprise, points) {
 }
 
 async function prechargerAlertes(code) {
+  // Sans projet favori, aucune annonce n'est affichée
+  if (!youthFavoris.length) {
+    alertesData = [];
+    updateDashboardBadge();
+    const p = document.getElementById('alertes-pastille');
+    if (p) p.style.display = 'none';
+    return;
+  }
   try {
     const favorisParam = youthFavoris.length ? '&favoris=' + encodeURIComponent(youthFavoris.join('|')) : '';
     const [resAlertes, resPostulees] = await Promise.all([
@@ -4392,6 +4427,13 @@ function closeAlertes() {
 async function loadAlertes() {
   const body = document.getElementById('alertes-body');
 
+  // Sans projet favori : message d'invitation, pas d'annonces
+  if (!youthFavoris.length) {
+    alertesData = [];
+    renderAlertesView();
+    return;
+  }
+
   // Si déjà chargé en arrière-plan, afficher directement
   if (alertesData.length > 0) {
     renderAlertesView();
@@ -4430,6 +4472,17 @@ async function loadAlertes() {
 
 function renderAlertesView() {
   const body = document.getElementById('alertes-body');
+
+  if (!youthFavoris.length) {
+    const subEl = document.getElementById('alertes-sub');
+    if (subEl) subEl.textContent = '';
+    body.innerHTML = '<div class="empty-state">'
+      + '<div class="empty-title">Définissez vos projets</div>'
+      + '<div class="empty-text">Définissez vos projets pour voir apparaître les places disponibles en ligne.</div>'
+      + '<button class="btn-primary" style="margin-top:16px" onclick="openFavorisModal()">Définir mes projets</button>'
+      + '</div>';
+    return;
+  }
   const actives = alertesData.filter(a => !alertesPostulees.has(a.id_mail));
   const archivees = alertesData.filter(a => alertesPostulees.has(a.id_mail));
 
@@ -5488,6 +5541,12 @@ async function saveFavoris() {
     closeFavorisModal();
     checkFavorisBanner();
     renderFavorisHeader();
+    updateDashFavorisBanner();
+    if (typeof renderProfilMobile === 'function') renderProfilMobile();
+    // Les annonces dépendent des favoris : recharger
+    alertesData = [];
+    prechargerAlertes(currentUser);
+    if (document.getElementById('screen-alertes')?.classList.contains('active')) loadAlertes();
     toast('Projets favoris enregistrés ✓');
   } catch(e) {
     toast('Erreur lors de l\'enregistrement', true);
