@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="app-version" content="2026.11.04-1">
+<meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,6 +39,7 @@
   --refus-bg: #FEF2F2; --refus-text: #991B1B; --refus-dot: #EF4444;
   --attente-bg: #F0EDE5; --attente-text: #7A6A58; --attente-dot: #B5A593;
   --reportee-bg: #F3E8FF; --reportee-text: #6B21A8; --reportee-dot: #A855F7;
+  --stage-bg: oklch(93% 0.05 190); --stage-text: oklch(35% 0.08 190); --stage-dot: oklch(60% 0.12 190);
 
   /* ── TOKENS MOBILES (remodelage) — scopés aux 4 écrans jeune mobiles, n'affectent jamais le desktop ni la page conseiller ── */
   --m-bg: oklch(96% 0.012 80);
@@ -494,6 +497,7 @@ body {
 .badge-Entretien  { background: var(--entretien-bg);color: var(--entretien-text);} .badge-Entretien::before  { background: var(--entretien-dot);}
 .badge-Refus      { background: var(--refus-bg);    color: var(--refus-text);    } .badge-Refus::before      { background: var(--refus-dot);    }
 .badge-En\ attente{ background: var(--attente-bg);  color: var(--attente-text);  } .badge-En\ attente::before{ background: var(--attente-dot);  }
+.badge-Stage      { background: var(--stage-bg);    color: var(--stage-text);    } .badge-Stage::before      { background: var(--stage-dot);    }
 .badge-Reportée   { background: var(--reportee-bg); color: var(--reportee-text); } .badge-Reportée::before   { background: var(--reportee-dot); }
 
 .empty-state {
@@ -1372,6 +1376,35 @@ tr:last-child td { border-bottom: none; }
 .mdash-favoris-text strong { display: block; font-size: 14px; font-weight: 600; color: var(--m-ink); margin-bottom: 2px; }
 .mdash-favoris-cta { flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--m-accent); display: flex; align-items: center; gap: 4px; }
 .mdash-favoris-cta svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
+/* ── Écran de mise à jour ── */
+#update-screen {
+  display: none; position: fixed; inset: 0; z-index: 10000;
+  background: var(--m-bg); color: var(--m-ink);
+  padding: calc(24px + var(--safe-top)) 24px calc(24px + var(--safe-bottom));
+  align-items: center; justify-content: center;
+}
+#update-screen.show { display: flex; animation: update-in 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes update-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.update-card { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; }
+.update-icon { width: 44px; height: 44px; color: var(--m-accent); margin-bottom: 8px; }
+.update-icon svg { width: 100%; height: 100%; stroke: currentColor; fill: none; }
+.update-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.15; margin: 0; }
+.update-text { font-family: 'Public Sans', sans-serif; font-size: 15.5px; line-height: 1.5; color: var(--m-ink-soft); margin: 0; }
+.update-hint { font-family: 'Public Sans', sans-serif; font-size: 13.5px; line-height: 1.45; color: var(--m-amber-ink); background: var(--m-amber-soft); border-radius: 10px; padding: 10px 12px; margin: 0; display: none; }
+.update-hint.show { display: block; }
+.update-btn {
+  margin-top: 12px; min-height: 56px; width: 100%; border: none; border-radius: var(--m-radius);
+  background: var(--m-accent); color: #fff; cursor: pointer;
+  font-family: 'Public Sans', sans-serif; font-weight: 600; font-size: 16px;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.update-btn:active { transform: scale(0.98); }
+.update-btn:disabled { opacity: 0.6; cursor: default; }
+@media (prefers-reduced-motion: reduce) {
+  #update-screen.show { animation: none; }
+  .update-btn { transition: none; }
+}
+
 .mdash-plane-wrap { flex: 1; display: flex; align-items: center; justify-content: flex-end; min-height: 230px; margin-top: 6px; }
 .mdash-plane-inner { width: 100%; max-width: 380px; margin: 0 auto; }
 
@@ -1427,6 +1460,7 @@ tr:last-child td { border-bottom: none; }
   #screen-youth .badge-Envoyée    { background: var(--m-envoyee-bg);   color: var(--m-envoyee-text); }
   #screen-youth .badge-Relancée   { background: var(--relancee-dot);   color: #fff; }
   #screen-youth .badge-Entretien  { background: var(--m-entretien-bg); color: var(--m-entretien-text); }
+  #screen-youth .badge-Stage      { background: var(--stage-bg); color: var(--stage-text); }
   #screen-youth .badge-Reportée   { background: var(--reportee-dot);   color: #fff; }
   #screen-youth .badge-Refus      { background: var(--m-refus-bg);     color: var(--m-refus-text); }
   #screen-youth .badge::before { background: currentColor; opacity: 0.55; }
@@ -1556,6 +1590,22 @@ tr:last-child td { border-bottom: none; }
     transition: none !important;
   }
 }
+.remember-code{display:flex;align-items:center;gap:.6rem;margin:-.25rem 0 1rem;font-size:.9rem;color:var(--text-2,inherit);cursor:pointer}
+.remember-code input{width:1.1rem;height:1.1rem;accent-color:var(--accent)}
+.stage-overlay{position:fixed;inset:0;background:oklch(22% 0.01 80 / .45);display:none;align-items:center;justify-content:center;padding:16px;z-index:1200}
+.stage-overlay.open{display:flex}
+.stage-box{background:var(--m-surface,#fff);border-radius:16px;padding:22px;max-width:420px;width:100%;box-shadow:0 12px 40px oklch(22% 0.01 80 / .25)}
+.stage-box h2{font-size:18px;margin:0 0 6px}
+.stage-box p{font-size:14px;color:var(--text2);margin:0 0 14px;line-height:1.45}
+.stage-box input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font:inherit;margin-bottom:16px;box-sizing:border-box}
+.stage-actions{display:flex;gap:10px}.stage-actions button{flex:1}
+.stage-line{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px}
+.stage-line a{color:var(--stage-text);font-weight:600}
+.stage-todo{background:var(--relancee-bg);color:var(--relancee-text);padding:2px 8px;border-radius:10px}
+.stage-done{background:var(--stage-bg);color:var(--stage-text);padding:2px 8px;border-radius:10px}
+.stage-doc{color:var(--stage-text);font-weight:600}
+.stage-dates{display:flex;gap:10px;margin-bottom:16px}.stage-dates label{flex:1;font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:4px}
+.stage-dates input{width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:10px;font:inherit;box-sizing:border-box}
 </style>
 </head>
 <body>
@@ -1587,6 +1637,7 @@ tr:last-child td { border-bottom: none; }
           <input type="text" id="youth-code" name="username" placeholder="Ex : SED01" autocomplete="username" autocapitalize="characters"
             oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')loginYouth()">
         </div>
+        <label class="remember-code"><input type="checkbox" id="remember-code" checked> Retenir mon code sur cet appareil</label>
         <button class="btn-primary" id="btn-login-youth" onclick="loginYouth()">Accéder à mon suivi →</button>
       </div>
 
@@ -1860,6 +1911,7 @@ tr:last-child td { border-bottom: none; }
         <option value="Entretien">Entretiens</option>
         <option value="Refus">Refus</option>
                 <option value="Reportée">Reportées</option>
+        <option value="Stage">Stages décrochés</option>
       </select>
     </div>
     <div class="filter-bar" id="youth-type-filter-bar" style="margin-bottom:14px">
@@ -1982,6 +2034,7 @@ tr:last-child td { border-bottom: none; }
         <button class="filter-btn" onclick="filterCounselor('Relancée', this)">Relancées</button>
         <button class="filter-btn" onclick="filterCounselor('Refus', this)">Refus</button>
                 <button class="filter-btn" onclick="filterCounselor('Reportée', this)">Reportées</button>
+        <button class="filter-btn" onclick="filterCounselor('Stage', this)">Stages</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <div style="display:flex;background:var(--surface2);border-radius:var(--radius);padding:3px;gap:2px">
@@ -2049,6 +2102,7 @@ tr:last-child td { border-bottom: none; }
           <option value="Entretien">Entretiens</option>
           <option value="Refus">Refus</option>
           <option value="Reportée">Reportées</option>
+          <option value="Stage">Stages décrochés</option>
         </select>
       </div>
       <div class="filter-bar" id="detail-type-filter-bar" style="margin-bottom:14px">
@@ -2089,6 +2143,7 @@ tr:last-child td { border-bottom: none; }
           onkeydown="handleMetierKey(event)"
           autocomplete="off">
         <div id="metier-error" style="display:none;font-size:12px;color:var(--refus-text);margin-top:4px">Ce métier n'est pas dans la liste. Sélectionnez une suggestion.</div>
+        <div id="metier-hint" style="display:none;font-size:12px;color:var(--text2);margin-top:4px"></div>
         <div id="metier-suggestions" class="autocomplete-list" style="display:none"></div>
       </div>
       <div class="field">
@@ -2103,7 +2158,16 @@ tr:last-child td { border-bottom: none; }
           <option>Entretien</option>
           <option>Refus</option>
           <option>Reportée</option>
+          <option>Stage</option>
         </select>
+      </div>
+      <div class="field" id="stage-field" style="display:none">
+        <div class="form-row">
+          <div class="field"><label>Début du stage</label><input type="date" id="f-stage-debut"></div>
+          <div class="field"><label>Fin du stage</label><input type="date" id="f-stage-fin"></div>
+        </div>
+        <label class="remember-code" style="margin:4px 0 6px"><input type="checkbox" id="f-stage-enreg"> Le stage a été enregistré</label>
+        <a class="stage-doc" href="https://www.ge.ch/document/28319/telecharger" target="_blank" rel="noopener">Ouvrir le formulaire d'enregistrement du stage</a>
       </div>
       <div class="field" id="rappel-field">
         <label>Me rappeler à partir du <span style="font-size:11px;color:var(--text3);font-weight:400">(optionnel)</span></label>
@@ -2216,6 +2280,30 @@ tr:last-child td { border-bottom: none; }
   <button id="kanban-undo-btn" onclick="undoKanbanMove()">Ctrl+Z Annuler</button>
 </div>
 
+<div id="update-screen" role="alertdialog" aria-labelledby="update-title" aria-describedby="update-text">
+  <div class="update-card">
+    <span class="update-icon"><svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.2"></path><polyline points="3 18 5.5 18.2 5.7 15.5"></polyline><path d="M3 12a9 9 0 0 1 15.5-6.2"></path><polyline points="21 6 18.5 5.8 18.3 8.5"></polyline></svg></span>
+    <h2 class="update-title" id="update-title">Nouvelle mise à jour</h2>
+    <p class="update-text" id="update-text">Une nouvelle version de l'application est disponible. Mettez-la à jour pour profiter des dernières nouveautés.</p>
+    <p class="update-hint" id="update-hint">Si ce message revient, fermez complètement l'application en la faisant glisser vers le haut, puis rouvrez-la.</p>
+    <button class="update-btn" id="update-btn" onclick="applyAppUpdate()">Mettre à jour</button>
+  </div>
+</div>
+
+<div id="stage-overlay" class="stage-overlay" onclick="if(event.target===this)answerStage(null)">
+  <div class="stage-box" role="dialog" aria-labelledby="stage-q">
+    <h2 id="stage-q">Le stage a-t-il été enregistré ?</h2>
+    <p>Le formulaire se trouve ici : <a class="stage-doc" href="https://www.ge.ch/document/28319/telecharger" target="_blank" rel="noopener">ouvrir le formulaire</a></p>
+    <div class="stage-dates">
+      <label>Début du stage<input type="date" id="stage-debut"></label>
+      <label>Fin du stage<input type="date" id="stage-fin"></label>
+    </div>
+    <div class="stage-actions">
+      <button class="btn-secondary" onclick="answerStage(false)">Pas encore</button>
+      <button class="btn-primary" onclick="answerStage(true)">Oui, enregistré</button>
+    </div>
+  </div>
+</div>
 <div id="toast" class="toast"></div>
 
 <!-- ══ NAVIGATION BAS DE PAGE (mobile) ═══════════════════════════════════════ -->
@@ -2777,6 +2865,9 @@ async function gsRead() {
       nom_jeune: r.nom_jeune || '',
       date_ajout: r.date_ajout || '',
       date_rappel: parseSheetDate(r.date_rappel) || '',
+      stage_debut: parseSheetDate(r.stage_debut) || '',
+      stage_fin: parseSheetDate(r.stage_fin) || '',
+      stage_enregistre: (r.stage_enregistre === true || String(r.stage_enregistre).toLowerCase() === 'oui' || String(r.stage_enregistre).toLowerCase() === 'true') ? 'oui' : (r.stage_enregistre ? 'non' : ''),
     });
   });
   return data;
@@ -2815,6 +2906,9 @@ async function gsAppend(item) {
     conseiller: currentConseiller ? currentConseiller.code : youthConseiller,
     date_ajout: item.date_ajout || new Date().toISOString(),
     date_rappel: item.date_rappel || '',
+    stage_debut: item.stage_debut || '',
+    stage_fin: item.stage_fin || '',
+    stage_enregistre: item.stage_enregistre || '',
   };
   const url = gsUrl('write', '&row=' + encodeURIComponent(JSON.stringify(row)));
   await fetch(url);
@@ -2835,6 +2929,9 @@ async function gsUpdate(item) {
     notes: item.notes,
     id: item.id,
     date_rappel: item.date_rappel || '',
+    stage_debut: item.stage_debut || '',
+    stage_fin: item.stage_fin || '',
+    stage_enregistre: item.stage_enregistre || '',
   };
   const url = gsUrl('update', '&row=' + encodeURIComponent(JSON.stringify(row)));
   await fetch(url);
@@ -2853,6 +2950,24 @@ function switchTab(tab) {
   document.getElementById('login-error').style.display = 'none';
 }
 
+function rememberYouthCode(code) {
+  try {
+    const cb = document.getElementById('remember-code');
+    if (cb && cb.checked) localStorage.setItem('cap_code_jeune', code);
+    else localStorage.removeItem('cap_code_jeune');
+  } catch(e) {}
+}
+function prefillYouthCode() {
+  try {
+    const c = localStorage.getItem('cap_code_jeune');
+    const inp = document.getElementById('youth-code');
+    if (c && inp && !inp.value) inp.value = c;
+    const cb = document.getElementById('remember-code');
+    if (cb) cb.checked = true;
+  } catch(e) {}
+}
+document.addEventListener('DOMContentLoaded', prefillYouthCode);
+
 async function loginYouth() {
   const code = document.getElementById('youth-code').value.trim().toUpperCase();
   if (!code) { showError('Entrez votre code personnel.'); return; }
@@ -2868,6 +2983,7 @@ async function loginYouth() {
       btnLogin.disabled = false;
       return;
     }
+    rememberYouthCode(code);
     currentUser = code;
     currentRole = 'youth';
     document.getElementById('youth-header-code').textContent = json.nom ? json.nom : code;
@@ -2938,6 +3054,7 @@ function logout() {
   clearSession();
   showScreen('login');
   document.getElementById('youth-code').value = '';
+  prefillYouthCode();
   document.getElementById('counselor-pwd').value = '';
   // Nettoyer le paramètre URL sans recharger
   if (window.history && window.location.search) {
@@ -3335,6 +3452,7 @@ function renderList(list, items) {
       + '<span class="cand-date">' + (item.date ? formatDate(item.date) : 'Date non renseignée') + '</span>'
       + (item.contact ? '<span style="font-size:12px;color:var(--text3)">· ' + item.contact + '</span>' : '')
       + '</div>'
+      + stageLineHTML(item)
       + (rappel ? '<div class="rappel-banner">🔔 ' + rappelLabel(item) + '</div>' : '')
       + (followup && !rappel ? '<div class="followup-banner">⏰ Envoyée il y a ' + days + ' jours — pensez à relancer !</div>' : '')
       + (item.notes ? '<div style="font-size:12px;color:var(--text2);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">' + item.notes + '</div>' : '')
@@ -3359,13 +3477,14 @@ function renderBloc(list, items) {
 }
 
 function renderKanban(list, items) {
-  const statuts = ['Envoyée', 'Relancée', 'Entretien', 'Refus', 'Reportée'];
+  const statuts = ['Envoyée', 'Relancée', 'Entretien', 'Stage', 'Refus', 'Reportée'];
   const colors = {
     'Envoyée':    {bg:'var(--envoyee-bg)',  text:'var(--envoyee-text)',  dot:'var(--envoyee-dot)'},
     'Relancée':   {bg:'var(--relancee-bg)', text:'var(--relancee-text)', dot:'var(--relancee-dot)'},
     'Entretien':  {bg:'var(--entretien-bg)',text:'var(--entretien-text)',dot:'var(--entretien-dot)'},
     'Refus':      {bg:'var(--refus-bg)',    text:'var(--refus-text)',    dot:'var(--refus-dot)'},
     'Reportée':   {bg:'var(--reportee-bg)', text:'var(--reportee-text)', dot:'var(--reportee-dot)'},
+    'Stage':      {bg:'var(--stage-bg)',    text:'var(--stage-text)',    dot:'var(--stage-dot)'},
   };
   const cols = statuts.map((statut, colIdx) => {
     const c = colors[statut];
@@ -3399,6 +3518,7 @@ function renderKanban(list, items) {
           return '<div class="kanban-card' + cardClass + '" data-id="' + item.id + '" onclick="openModal(\'' + item.id + '\')">'
             + '<div class="kanban-card-title">' + item.entreprise + '</div>'
             + '<div class="kanban-card-sub">' + item.metier + (item.type ? ' · ' + item.type : '') + '</div>'
+            + stageLineHTML(item)
             + (rappel ? '<div style="font-size:11px;color:var(--reportee-text);margin-top:4px">🔔 ' + rappelLabel(item) + '</div>' : '')
             + (followup && !rappel ? '<div style="font-size:11px;color:#92590A;margin-top:4px">⏰ ' + days + 'j sans réponse</div>' : '')
             + '<div class="kanban-card-date">' + (item.date ? formatDate(item.date) : '—') + '</div>'
@@ -3434,11 +3554,17 @@ function openModal(id) {
   document.getElementById('f-date').value = item?.date || todayISO();
   document.getElementById('f-statut').value = item?.statut || 'Envoyée';
   document.getElementById('f-date-rappel').value = item?.date_rappel || '';
+  document.getElementById('f-stage-debut').value = item?.stage_debut || '';
+  document.getElementById('f-stage-fin').value = item?.stage_fin || '';
+  document.getElementById('f-stage-enreg').checked = item?.stage_enregistre === 'oui';
+  stageAsked = !!item && item.statut === 'Stage';
   onStatutChange(item?.statut || 'Envoyée');
   document.getElementById('f-contact').value = item?.contact || '';
   document.getElementById('f-tel').value = item?.telephone || '';
   document.getElementById('f-email').value = item?.email || '';
   document.getElementById('f-notes').value = item?.notes || '';
+  const metierHintEl = document.getElementById('metier-hint');
+  if (metierHintEl) metierHintEl.style.display = 'none';
 
   document.getElementById('modal-overlay').classList.add('open');
   const modalEl = document.querySelector('#modal-overlay .modal');
@@ -3481,12 +3607,19 @@ async function saveCandidature() {
     telephone: document.getElementById('f-tel').value.trim(),
     email: document.getElementById('f-email').value.trim(),
     notes: document.getElementById('f-notes').value.trim(),
+    stage_debut: document.getElementById('f-statut').value === 'Stage' ? document.getElementById('f-stage-debut').value : '',
+    stage_fin: document.getElementById('f-statut').value === 'Stage' ? document.getElementById('f-stage-fin').value : '',
+    stage_enregistre: document.getElementById('f-statut').value === 'Stage' ? (document.getElementById('f-stage-enreg').checked ? 'oui' : 'non') : '',
     date_ajout: editingId ? null : new Date().toISOString(),
   };
 
   const btnSave = document.getElementById('btn-save');
   btnSave.textContent = 'Enregistrement...';
   btnSave.disabled = true;
+
+  // Valeurs à conserver : closeModal() remet editingId et pendingAlertId à null
+  const wasEditing = !!editingId;
+  const alertIdToSave = (!editingId && pendingAlertId) ? pendingAlertId : null;
 
   try {
     if (editingId) {
@@ -3499,16 +3632,24 @@ async function saveCandidature() {
     }
     closeModal();
     renderYouth();
-    toast(editingId ? 'Candidature mise à jour ✓' : 'Candidature ajoutée ✓');
-    // Marquer l'alerte comme postulée si vient d'une annonce
-    if (pendingAlertId && !editingId) {
-      alertesPostulees.add(pendingAlertId);
+    toast(wasEditing ? 'Candidature mise à jour ✓' : 'Candidature ajoutée ✓');
+    // Marquer l'alerte comme postulée si la candidature vient d'une annonce
+    if (alertIdToSave) {
+      alertesPostulees.add(alertIdToSave);
       updateDashboardBadge();
-      fetch(gsUrl('save_alerte_postulee',
-        '&code=' + encodeURIComponent(currentUser) +
-        '&id_alerte=' + encodeURIComponent(pendingAlertId)
-      )).catch(() => {});
-      pendingAlertId = null;
+      try {
+        const resAlerte = await fetch(gsUrl('save_alerte_postulee',
+          '&code=' + encodeURIComponent(currentUser) +
+          '&id_alerte=' + encodeURIComponent(alertIdToSave)
+        ));
+        const jsonAlerte = await resAlerte.json().catch(() => null);
+        if (!resAlerte.ok || (jsonAlerte && jsonAlerte.error)) throw new Error('save_alerte_postulee');
+      } catch(e) {
+        // La candidature est enregistrée ; on retire seulement la marque locale pour que l'annonce reste visible
+        alertesPostulees.delete(alertIdToSave);
+        updateDashboardBadge();
+        toast("Candidature ajoutée, mais l'annonce n'a pas pu être marquée comme postulée.", true);
+      }
     }
   } catch(e) {
     toast('Erreur lors de la sauvegarde', true);
@@ -4030,6 +4171,47 @@ function daysSince(iso) {
 function onStatutChange(val) {
   const field = document.getElementById('rappel-field');
   if (field) field.style.display = val === 'Reportée' ? 'block' : 'none';
+  const sf = document.getElementById('stage-field');
+  if (sf) sf.style.display = val === 'Stage' ? 'block' : 'none';
+  if (val === 'Stage' && !stageAsked) {
+    stageAsked = true;
+    askStage({ stage_debut: document.getElementById('f-stage-debut').value, stage_fin: document.getElementById('f-stage-fin').value }).then(r => {
+      if (!r) return;
+      document.getElementById('f-stage-debut').value = r.stage_debut;
+      document.getElementById('f-stage-fin').value = r.stage_fin;
+      document.getElementById('f-stage-enreg').checked = r.stage_enregistre === 'oui';
+    });
+  }
+  if (val !== 'Stage') stageAsked = false;
+}
+
+// ── ÉTAPE STAGE ──────────────────────────────────────────────────────────────
+let stageAsked = false;
+let stageResolver = null;
+const STAGE_RAPPORT_URL = 'https://www.ge.ch/document/28320/telecharger';
+function stageLineHTML(item) {
+  if (item.statut !== 'Stage') return '';
+  const aEnreg = item.stage_enregistre !== 'oui';
+  const dates = item.stage_debut || item.stage_fin
+    ? '<span>' + (item.stage_debut ? formatDate(item.stage_debut) : '?') + ' → ' + (item.stage_fin ? formatDate(item.stage_fin) : '?') + '</span>' : '';
+  return '<div class="stage-line">'
+    + (aEnreg ? '<span class="stage-todo">À enregistrer</span>' : '<span class="stage-done">Enregistré</span>')
+    + dates + '</div>';
+}
+function askStage(item) {
+  return new Promise(resolve => {
+    stageResolver = resolve;
+    document.getElementById('stage-debut').value = item.stage_debut || '';
+    document.getElementById('stage-fin').value = item.stage_fin || '';
+    document.getElementById('stage-overlay').classList.add('open');
+  });
+}
+function answerStage(valide) {
+  document.getElementById('stage-overlay').classList.remove('open');
+  const r = valide === null ? null : { stage_enregistre: valide ? 'oui' : 'non',
+    stage_debut: document.getElementById('stage-debut').value, stage_fin: document.getElementById('stage-fin').value };
+  const fn = stageResolver; stageResolver = null;
+  if (fn) fn(r);
 }
 
 function needsFollowUp(item) {
@@ -4093,6 +4275,8 @@ let selectedSuggestionIdx = -1;
 function selectMetier(metier) {
   document.getElementById('f-metier').value = metier;
   document.getElementById('metier-error').style.display = 'none';
+  const hintEl = document.getElementById('metier-hint');
+  if (hintEl) hintEl.style.display = 'none';
   document.getElementById('metier-suggestions').style.display = 'none';
 }
 
@@ -4610,11 +4794,64 @@ function nettoyerMetierOrientation(metier) {
   return s;
 }
 
+// ── RAPPROCHEMENT D'UN TITRE D'ANNONCE ET DE LA LISTE DES MÉTIERS ────────────
+// Les titres des annonces (JobUp surtout) varient : « Cuisinier / Cuisinière CFC 2027 »,
+// « Apprenti·e employé·e de commerce », etc. On les compare mot à mot à la liste officielle.
+const METIER_MOTS_IGNORES = new Set(['de','du','des','la','le','les','en','et','au','aux','un','une','pour','dans','sur','avec','par','chez','dès','des','apprenti','apprentie','apprentis','apprentissage','formation','place','poste','h','f','m','w','x','d','l']);
+let METIER_INDEX = null;
+
+function normMetierTokens(str) {
+  let s = String(str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  s = s.replace(/\([^)]*\)/g, ' ')               // spécialisations et (h/f)
+       .replace(/\s*[\/·•]\s*[a-z]+/g, ' ')       // /e, ·e, / cuisinière : forme féminine
+       .replace(/[’']/g, ' ')                     // d'entretien -> d entretien
+       .replace(/\b20\d\d\b/g, ' ')               // années
+       .replace(/[^a-z0-9 -]/g, ' ');
+  const niveau = (s.match(/\b(afp|cfc)\b/) || [])[1] || '';
+  s = s.replace(/\b(afp|cfc)\b/g, ' ');
+  const tokens = new Set();
+  s.split(/[\s-]+/).forEach(w => {
+    if (!w || METIER_MOTS_IGNORES.has(w) || w.length < 2) return;
+    // racine simplifiée, appliquée aussi à la liste : cuisiniere/cuisinier, employee/employe
+    w = w.replace(/iere$/, 'ier').replace(/ere$/, 'er').replace(/euse$/, 'eur').replace(/trice$/, 'teur').replace(/ienne$/, 'ien');
+    if (w.length > 5) w = w.replace(/e$/, '').replace(/s$/, '');
+    tokens.add(w);
+  });
+  return { tokens, niveau };
+}
+
+// Retourne { match: 'Métier CFC' | null, base: texte à proposer sinon }
+function resolveMetier(titre) {
+  const nettoye = nettoyerMetierOrientation(titre);
+  if (METIERS_SUISSE.includes(nettoye)) return { match: nettoye, base: nettoye };
+  if (!METIER_INDEX) {
+    METIER_INDEX = METIERS_SUISSE.map(m => Object.assign({ m }, normMetierTokens(m)));
+  }
+  const q = normMetierTokens(titre);
+  // Texte de repli : le titre sans niveau, sans année et sans parenthèses
+  const base = nettoye
+    .replace(/\s*[\/·•]\s*\S+/g, '')
+    .replace(/^(apprenti(e|s)?|apprentissage|poste de|place d['’]apprentissage)\s+/i, '')
+    .replace(/\b20\d\d\b/g, '').replace(/\b(AFP|CFC)\b/gi, '').replace(/\s+/g, ' ').trim();
+  if (!q.tokens.size) return { match: null, base };
+  let meilleurs = [], meilleurScore = 0;
+  METIER_INDEX.forEach(e => {
+    let communs = 0;
+    q.tokens.forEach(t => { if (e.tokens.has(t)) communs++; });
+    let score = (2 * communs) / (q.tokens.size + e.tokens.size);
+    if (q.niveau && e.niveau === q.niveau) score += 0.05;
+    if (score > meilleurScore + 1e-9) { meilleurScore = score; meilleurs = [e]; }
+    else if (Math.abs(score - meilleurScore) < 1e-9) meilleurs.push(e);
+  });
+  if (meilleurScore >= 0.6 && meilleurs.length === 1) return { match: meilleurs[0].m, base };
+  return { match: null, base };
+}
+
 function postulerDepuisAlerte(metier, entreprise, lieu, idAlerte) {
   // Mémoriser l'ID alerte — sauvegardé seulement si la candidature est enregistrée
   pendingAlertId = idAlerte || null;
   // Préremplir le formulaire et fermer les alertes
-  const metierNettoye = nettoyerMetierOrientation(metier);
+  const resolu = resolveMetier(metier);
   closeAlertes();
   openModal(null);
   // Attendre que le modal soit ouvert
@@ -4622,12 +4859,27 @@ function postulerDepuisAlerte(metier, entreprise, lieu, idAlerte) {
     const fEnterprise = document.getElementById('f-enterprise');
     const fMetier = document.getElementById('f-metier');
     const fNotes = document.getElementById('f-notes');
+    const hint = document.getElementById('metier-hint');
     if (fEnterprise) fEnterprise.value = entreprise;
     if (fMetier) {
-      fMetier.value = metierNettoye;
       document.getElementById('metier-error') && (document.getElementById('metier-error').style.display = 'none');
+      if (resolu.match) {
+        fMetier.value = resolu.match;
+        if (hint) hint.style.display = 'none';
+      } else {
+        // Pas de correspondance sûre : on propose les métiers proches et le jeune choisit
+        fMetier.value = resolu.base;
+        if (hint) {
+          hint.textContent = "Le métier de l'annonce n'a pas été reconnu avec certitude. Choisissez le plus proche dans la liste.";
+          hint.style.display = 'block';
+        }
+        showMetierSuggestions(resolu.base);
+      }
     }
-    if (fNotes && lieu) fNotes.value = lieu ? 'Lieu : ' + lieu : '';
+    const notes = [];
+    if (lieu) notes.push('Lieu : ' + lieu);
+    if (!resolu.match && metier) notes.push('Annonce : ' + metier);
+    if (fNotes && notes.length) fNotes.value = notes.join('\n');
     document.getElementById('f-type') && document.getElementById('f-type').focus();
   }, 150);
 }
@@ -4788,6 +5040,11 @@ async function moveKanbanCard(id, newStatut) {
 
   const oldStatut = item.statut;
   kanbanLastMove = { id, oldStatut, newStatut };
+  if (newStatut === 'Stage') {
+    const r = await askStage(item);
+    if (!r) { renderYouth(); return; }
+    item.stage_debut = r.stage_debut; item.stage_fin = r.stage_fin; item.stage_enregistre = r.stage_enregistre;
+  }
 
   // Mise à jour locale immédiate
   item.statut = newStatut;
@@ -6057,6 +6314,73 @@ initPlaneScene({
   ctaText: null, ctaArrowSvg: null
 });
 // Safe area gérée nativement par iOS en mode default
+
+// ── MISE À JOUR DE L'APP ─────────────────────────────────────────────────────
+// Une app installée reste en mémoire : sans fermeture complète, elle ne recharge jamais.
+// On compare donc sa version (meta app-version) à celle du serveur, au lancement et au retour au premier plan.
+// Le niveau « major » (meta app-update-level du serveur) affiche l'écran de mise à jour ; « minor » ne fait rien.
+const APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || '';
+let lastVersionCheck = 0;
+let updateScreenShown = false;
+
+async function checkAppVersion(force) {
+  if (updateScreenShown || !APP_VERSION || navigator.onLine === false) return;
+  const now = Date.now();
+  if (!force && now - lastVersionCheck < 60000) return;
+  lastVersionCheck = now;
+  try {
+    // Seul le début du fichier est utile (les balises meta sont dans le head)
+    const res = await fetch('./index.html?vcheck=' + now, { cache: 'no-store', headers: { Range: 'bytes=0-4095' } });
+    if (!res.ok) return;
+    const head = await res.text();
+    const remoteVersion = (head.match(/<meta name="app-version" content="([^"]+)"/) || [])[1];
+    const level = (head.match(/<meta name="app-update-level" content="([^"]+)"/) || [])[1] || 'minor';
+    if (!remoteVersion) return;
+    if (remoteVersion === APP_VERSION) {
+      try { sessionStorage.removeItem('cap_update_tries'); } catch(e) {}
+      return;
+    }
+    if (level === 'major') showUpdateScreen();
+  } catch(e) { /* silencieux : la vérification n'est jamais bloquante */ }
+}
+
+function showUpdateScreen() {
+  updateScreenShown = true;
+  let tries = 0;
+  try { tries = parseInt(sessionStorage.getItem('cap_update_tries') || '0', 10) || 0; } catch(e) {}
+  const hint = document.getElementById('update-hint');
+  if (hint) hint.classList.toggle('show', tries >= 1);
+  const el = document.getElementById('update-screen');
+  if (el) el.classList.add('show');
+}
+
+async function applyAppUpdate() {
+  const btn = document.getElementById('update-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Mise à jour en cours...'; }
+  try {
+    const tries = (parseInt(sessionStorage.getItem('cap_update_tries') || '0', 10) || 0) + 1;
+    sessionStorage.setItem('cap_update_tries', String(tries));
+  } catch(e) {}
+  try {
+    // On ne désinscrit jamais le service worker : cela supprimerait l'abonnement aux notifications
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.update().catch(() => {})));
+    }
+    if (window.caches) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+  } catch(e) {}
+  // Adresse différente à chaque fois : contourne tout cache résiduel. La session (sessionStorage) est conservée.
+  location.replace(location.pathname + '?maj=' + Date.now());
+}
+
+window.addEventListener('load', () => checkAppVersion(true));
+window.addEventListener('pageshow', (e) => { if (e.persisted) checkAppVersion(true); });
+window.addEventListener('online', () => checkAppVersion());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkAppVersion(); });
+
 // ── SERVICE WORKER ────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
