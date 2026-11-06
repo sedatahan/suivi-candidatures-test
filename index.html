@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.06-1">
+<meta name="app-version" content="2026.11.06-2">
 <meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -1616,6 +1616,33 @@ tr:last-child td { border-bottom: none; }
 .stage-dates input{display:block;width:100%;max-width:100%;min-width:0;padding:9px 10px;border:1.5px solid var(--border);border-radius:10px;font:inherit;box-sizing:border-box;-webkit-appearance:none;appearance:none;background:var(--bg)}
 #stage-field .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 #stage-field input[type=date]{min-width:0;max-width:100%;width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none}
+
+/* ── TUTORIEL ───────────────────────────────────────────────────────────────── */
+#tuto-intro{position:fixed;inset:0;z-index:3100;display:none;align-items:center;justify-content:center;padding:20px;background:var(--m-bg, oklch(96% 0.012 80))}
+#tuto-intro.show{display:flex}
+.tuto-card{width:100%;max-width:420px;display:flex;flex-direction:column;min-height:min(520px,86vh)}
+.tuto-skip{align-self:flex-end;background:none;border:none;color:var(--m-ink-soft, var(--text2));font:inherit;font-size:14px;padding:8px 4px;cursor:pointer}
+.tuto-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:12px 4px}
+.tuto-step-num{font-family:'Space Grotesk','DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--m-accent, #3730A3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+.tuto-title{font-family:'Space Grotesk','DM Sans',sans-serif;font-size:30px;line-height:1.15;font-weight:600;color:var(--m-ink, #2b2118);margin:0 0 14px}
+.tuto-text{font-size:17px;line-height:1.5;color:var(--m-ink, #2b2118);max-width:34ch;margin:0}
+.tuto-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:12px}
+.tuto-dots{display:flex;gap:8px}
+.tuto-dot{width:8px;height:8px;border-radius:50%;background:var(--m-border, #ddd)}
+.tuto-dot.on{background:var(--m-accent, #3730A3);width:22px;border-radius:8px}
+.tuto-next{background:var(--m-accent, #3730A3);color:oklch(98% 0.005 80);border:none;border-radius:14px;padding:14px 26px;font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+#coach{position:fixed;inset:0;z-index:3000;display:none}
+#coach.show{display:block}
+#coach .coach-block{position:absolute;inset:0}
+#coach .coach-spot{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px oklch(22% 0.01 80 / .62);pointer-events:none;transition:all .28s cubic-bezier(0.16,1,0.3,1)}
+#coach .coach-bubble{position:fixed;width:min(320px,calc(100vw - 32px));background:oklch(99% 0.003 80);color:oklch(22% 0.01 80);border-radius:16px;padding:16px 16px 14px;box-shadow:0 10px 34px oklch(22% 0.01 80 / .3);transition:top .28s cubic-bezier(0.16,1,0.3,1),left .28s cubic-bezier(0.16,1,0.3,1)}
+#coach .coach-count{font-size:12px;font-weight:600;color:var(--m-accent, #3730A3);margin-bottom:6px}
+#coach .coach-text{font-size:15px;line-height:1.45;margin:0 0 14px}
+#coach .coach-actions{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#coach .coach-skip{background:none;border:none;font:inherit;font-size:13px;color:oklch(52% 0.02 80);padding:6px 2px;cursor:pointer}
+#coach .coach-next{background:var(--m-accent, #3730A3);color:oklch(98% 0.005 80);border:none;border-radius:12px;padding:10px 18px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+@media (prefers-reduced-motion:reduce){#coach .coach-spot,#coach .coach-bubble{transition:none}}
+.mprofil-tuto-btn{width:100%;background:none;border:1.5px solid var(--m-border, #ddd);border-radius:14px;padding:12px;font:inherit;font-size:15px;color:var(--m-ink, #2b2118);cursor:pointer}
 </style>
 </head>
 <body>
@@ -1982,6 +2009,10 @@ tr:last-child td { border-bottom: none; }
     </div>
 
     <div class="mprofil-section">
+      <button class="mprofil-tuto-btn" onclick="tutoRestart()">Revoir le tutoriel</button>
+    </div>
+
+    <div class="mprofil-section">
       <div class="mprofil-toggle-row">
         <span>Notifications activées</span>
         <label class="mprofil-switch">
@@ -2303,6 +2334,32 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<div id="tuto-intro" role="dialog" aria-modal="true" aria-labelledby="tuto-title">
+  <div class="tuto-card">
+    <button class="tuto-skip" id="tuto-skip" onclick="tutoIntroEnd()">Passer</button>
+    <div class="tuto-body">
+      <div class="tuto-step-num" id="tuto-step-num"></div>
+      <h2 class="tuto-title" id="tuto-title"></h2>
+      <p class="tuto-text" id="tuto-text"></p>
+    </div>
+    <div class="tuto-foot">
+      <div class="tuto-dots" id="tuto-dots"></div>
+      <button class="tuto-next" id="tuto-next" onclick="tutoIntroNext()">Suivant</button>
+    </div>
+  </div>
+</div>
+<div id="coach" aria-live="polite">
+  <div class="coach-block"></div>
+  <div class="coach-spot" id="coach-spot"></div>
+  <div class="coach-bubble" id="coach-bubble" role="dialog">
+    <div class="coach-count" id="coach-count"></div>
+    <p class="coach-text" id="coach-text"></p>
+    <div class="coach-actions">
+      <button class="coach-skip" onclick="coachStop(true)">Passer le tutoriel</button>
+      <button class="coach-next" id="coach-next" onclick="coachNext()">Suivant</button>
+    </div>
+  </div>
+</div>
 <div id="stage-overlay" class="stage-overlay" onclick="if(event.target===this)answerStage(null)">
   <div class="stage-box" role="dialog" aria-labelledby="stage-q">
     <h2 id="stage-q">Le formulaire d'enregistrement de stage a-t-il été rempli ?</h2>
@@ -2393,6 +2450,7 @@ async function restoreSession() {
         const resFav = await fetch(gsUrl('check_code', '&code=' + encodeURIComponent(user)));
         const jsonFav = await resFav.json();
         youthFavoris = jsonFav.favoris ? jsonFav.favoris.split('|').filter(Boolean) : [];
+        youthTutoRemote = jsonFav.tuto || '';
         youthConseiller = jsonFav.conseiller || '';
         if (jsonFav.nom) document.getElementById('youth-header-code').textContent = jsonFav.nom;
       } catch(e) { youthFavoris = []; }
@@ -2905,6 +2963,7 @@ async function gsReadJeunes() {
 }
 
 async function gsAppend(item) {
+  if (isDemoId(item.id)) return;
   const row = {
     code_jeune: currentUser,
     nom_jeune: currentUser,
@@ -2931,6 +2990,7 @@ async function gsAppend(item) {
 }
 
 async function gsUpdate(item) {
+  if (isDemoId(item.id)) return;
   const row = {
     code_jeune: currentUser,
     nom_jeune: currentUser,
@@ -2955,6 +3015,7 @@ async function gsUpdate(item) {
 }
 
 async function gsDelete(id, code) {
+  if (isDemoId(id)) return;
   const url = gsUrl('delete', '&id=' + id + '&code=' + code);
   await fetch(url);
 }
@@ -3006,6 +3067,7 @@ async function loginYouth() {
     document.getElementById('youth-header-code').textContent = json.nom ? json.nom : code;
     youthConseiller = json.conseiller || '';
     youthFavoris = json.favoris ? json.favoris.split('|').filter(Boolean) : [];
+    youthTutoRemote = json.tuto || '';
     favorisBannerDismissed = false;
     btnLogin.textContent = 'Chargement...';
     allData = await gsRead();
@@ -3066,6 +3128,7 @@ async function loginCounselor() {
 }
 
 function logout() {
+  youthTutoRemote = '';
   currentUser = null; currentRole = null; currentConseiller = null; youthConseiller = ''; allData = {}; youthFilter = 'all'; youthFavoris = []; alertesData = []; alertesPostulees = new Set(); favorisBannerDismissed = false; mobileOnlyRelances = false;
   alertesData = []; alertesPostulees = new Set();
   clearSession();
@@ -3116,6 +3179,7 @@ function showScreen(name) {
   document.getElementById('screen-'+name).classList.add('active');
   if (name !== 'loading') document.getElementById('login-error').style.display = 'none';
   updateMobileNav(name);
+  if (typeof tutoOnScreen === 'function' && ['dashboard','youth','alertes','profil'].indexOf(name) >= 0) setTimeout(() => tutoOnScreen(name), 300);
 }
 
 // ── NAVIGATION MOBILE (Dashboard / Mes candidatures / Annonces / Profil) ─────
@@ -3612,7 +3676,7 @@ async function saveCandidature() {
   if (!allData[currentUser]) allData[currentUser] = [];
 
   const item = {
-    id: editingId || genId(),
+    id: editingId || (tutoDemo ? 'demo_' : '') + genId(),
     type: type,
     entreprise: enterprise,
     metier: metier,
@@ -6411,6 +6475,208 @@ window.addEventListener('load', () => checkAppVersion(true));
 window.addEventListener('pageshow', (e) => { if (e.persisted) checkAppVersion(true); });
 window.addEventListener('online', () => checkAppVersion());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkAppVersion(); });
+
+
+// ── TUTORIEL ─────────────────────────────────────────────────────────────────
+// Deux parties : (1) cartes d'introduction à la première ouverture ; (2) bulles sur les écrans
+// réels, dont un exercice guidé avec une candidature d'exemple (jamais envoyée au Sheet).
+// La progression est gardée sur l'appareil (localStorage), par code jeune. Chaque carte / écran
+// a un numéro de version `v` : après une grosse mise à jour, ajoutez une carte ou une étape avec
+// v supérieur et augmentez TUTO_VERSIONS.<écran> : seules les nouveautés seront montrées.
+const TUTO_INTRO = [
+  { v: 1, titre: 'Bienvenue sur votre suivi', texte: "Vous gardez ici la trace de toutes vos candidatures. Rien ne se perd, et vous restez maître de votre parcours." },
+  { v: 1, titre: 'Suivre vos candidatures', texte: "Ajoutez chaque candidature envoyée, puis changez son statut au fil des réponses. Après 10 jours sans nouvelles, l'app vous rappelle de relancer." },
+  { v: 1, titre: 'Trouver des places', texte: "Choisissez jusqu'à 3 métiers dans vos projets favoris. Les annonces qui correspondent apparaissent, et une candidature se prépare en un geste." },
+  { v: 1, titre: 'Rester prévenu', texte: "Activez les notifications dans votre profil : les relances et les nouvelles places arrivent directement sur votre téléphone." },
+];
+const TUTO_BULLES = {
+  dashboard: [
+    { v: 1, cible: '#mdash-stats', texte: "Vos chiffres en un coup d'œil : candidatures envoyées, entretiens, reportées et refus." },
+    { v: 1, cible: '.mdash-tile-relances', texte: "Ici, les candidatures restées sans réponse depuis 10 jours. C'est le bon moment pour relancer." },
+    { v: 1, cible: '#mobile-bottom-nav', texte: "Le menu du bas vous mène à vos candidatures, aux annonces et à votre profil." },
+  ],
+  alertes: [
+    { v: 1, cible: '#alertes-body', texte: "Les nouvelles places qui correspondent à vos projets s'affichent ici. Touchez une annonce pour postuler : la candidature se prépare toute seule." },
+  ],
+  profil: [
+    { v: 1, cible: '#mprofil-favoris-list', texte: "Vos projets favoris : choisissez jusqu'à 3 métiers pour recevoir les annonces qui vous concernent." },
+    { v: 1, cible: '#mprofil-notif-main', texte: "Activez les notifications pour être prévenu des relances et des nouvelles places." },
+  ],
+};
+const TUTO_VERSIONS = { intro: 1, dashboard: 1, youth: 1, alertes: 1, profil: 1 };
+
+let tutoActive = false;
+let tutoDemo = false;          // l'exercice guidé est en cours
+let tutoIntroList = [], tutoIntroIdx = 0;
+let coachList = [], coachIdx = 0, coachScreen = '', coachOnEnd = null;
+
+function tutoKey() { return 'cap_tuto_' + currentUser; }
+// Progression : colonne « tuto » de l'onglet Jeunes (format « intro:1|dashboard:1 »), avec
+// copie locale en secours si le réseau lâche. Pour chaque rubrique, on garde la valeur la plus haute.
+let youthTutoRemote = '';
+function tutoParse(str) {
+  const o = {};
+  String(str || '').split('|').forEach(p => { const m = p.split(':'); if (m[0] && !isNaN(parseInt(m[1], 10))) o[m[0]] = parseInt(m[1], 10); });
+  return o;
+}
+function tutoSerialize(st) { return Object.keys(st).map(k => k + ':' + st[k]).join('|'); }
+function tutoLoad() {
+  let local = {};
+  try { local = JSON.parse(localStorage.getItem(tutoKey())) || {}; } catch(e) {}
+  const st = tutoParse(youthTutoRemote);
+  Object.keys(local).forEach(k => { st[k] = Math.max(st[k] || 0, local[k] || 0); });
+  return st;
+}
+function tutoSave(st) {
+  try { localStorage.setItem(tutoKey(), JSON.stringify(st)); } catch(e) {}
+  youthTutoRemote = tutoSerialize(st);
+  tutoSendRemote(youthTutoRemote);
+}
+function tutoSendRemote(val) {
+  if (!currentUser) return;
+  fetch(gsUrl('save_tuto', '&code=' + encodeURIComponent(currentUser) + '&tuto=' + encodeURIComponent(val))).catch(() => {});
+}
+function tutoMark(part) { const st = tutoLoad(); st[part] = TUTO_VERSIONS[part]; tutoSave(st); }
+function tutoRestart() {
+  try { localStorage.removeItem(tutoKey()); } catch(e) {}
+  youthTutoRemote = ''; tutoSendRemote('');
+  if (isMobileLayout()) showScreen('dashboard');
+  tutoActive = false;
+  setTimeout(() => tutoOnScreen(isMobileLayout() ? 'dashboard' : 'youth'), 150);
+}
+function isDemoId(id) { return String(id || '').indexOf('demo_') === 0; }
+
+// Appelé à chaque changement d'écran du jeune
+function tutoOnScreen(name) {
+  if (tutoActive || currentRole !== 'youth' || !currentUser) return;
+  if (document.getElementById('update-screen')?.classList.contains('show')) return;
+  if (document.getElementById('modal-overlay')?.classList.contains('open')) return;
+  const st = tutoLoad();
+  const dejaVu = st.intro || 0;
+  const aMontrer = TUTO_INTRO.filter(c => c.v > dejaVu);
+  if (aMontrer.length) { tutoIntroStart(aMontrer, name); return; }
+  if (!isMobileLayout()) return;
+  if (name === 'youth') {
+    if ((st.youth || 0) < TUTO_VERSIONS.youth) setTimeout(tutoDemoStart, 400);
+    return;
+  }
+  const liste = (TUTO_BULLES[name] || []).filter(b => b.v > (st[name] || 0));
+  if (liste.length) setTimeout(() => { if (!tutoActive) coachStart(liste, name); }, 450);
+}
+
+// ── Cartes d'introduction ────────────────────────────────────────────────────
+function tutoIntroStart(liste, name) {
+  tutoActive = true; tutoIntroList = liste; tutoIntroIdx = 0;
+  tutoIntroAfter = name;
+  document.getElementById('tuto-intro').classList.add('show');
+  tutoIntroRender();
+}
+let tutoIntroAfter = '';
+function tutoIntroRender() {
+  const c = tutoIntroList[tutoIntroIdx], n = tutoIntroList.length;
+  document.getElementById('tuto-step-num').textContent = (tutoIntroIdx + 1) + ' sur ' + n;
+  document.getElementById('tuto-title').textContent = c.titre;
+  document.getElementById('tuto-text').textContent = c.texte;
+  document.getElementById('tuto-dots').innerHTML = tutoIntroList.map((_, i) => '<span class="tuto-dot' + (i === tutoIntroIdx ? ' on' : '') + '"></span>').join('');
+  const last = tutoIntroIdx === n - 1;
+  document.getElementById('tuto-next').textContent = last ? "C'est parti" : 'Suivant';
+  document.getElementById('tuto-skip').style.visibility = last ? 'hidden' : 'visible';
+}
+function tutoIntroNext() {
+  if (tutoIntroIdx < tutoIntroList.length - 1) { tutoIntroIdx++; tutoIntroRender(); }
+  else tutoIntroEnd();
+}
+function tutoIntroEnd() {
+  document.getElementById('tuto-intro').classList.remove('show');
+  tutoMark('intro');
+  tutoActive = false;
+  setTimeout(() => tutoOnScreen(tutoIntroAfter || 'dashboard'), 200);
+}
+
+// ── Bulles ───────────────────────────────────────────────────────────────────
+function coachStart(liste, screen, onEnd, forcer) {
+  const visibles = forcer ? liste : liste.filter(b => { const el = document.querySelector(b.cible); return el && el.offsetParent !== null || (el && getComputedStyle(el).position === 'fixed'); });
+  if (!visibles.length) { if (screen) tutoMark(screen); if (onEnd) onEnd(); return; }
+  tutoActive = true; coachList = visibles; coachIdx = 0; coachScreen = screen; coachOnEnd = onEnd || null;
+  document.getElementById('coach').classList.add('show');
+  coachRender();
+}
+function coachRender() {
+  const b = coachList[coachIdx];
+  const el = document.querySelector(b.cible);
+  if (!el) { coachNext(); return; }
+  try { el.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch(e) { el.scrollIntoView(); }
+  document.getElementById('coach-count').textContent = coachList.length > 1 ? (coachIdx + 1) + ' sur ' + coachList.length : '';
+  document.getElementById('coach-text').textContent = b.texte;
+  document.getElementById('coach-next').textContent = b.bouton || (coachIdx === coachList.length - 1 ? 'Terminer' : 'Suivant');
+  setTimeout(coachPlace, 60);
+}
+function coachPlace() {
+  const b = coachList[coachIdx]; if (!b) return;
+  const el = document.querySelector(b.cible); if (!el) return;
+  const r = el.getBoundingClientRect(), pad = 6;
+  const spot = document.getElementById('coach-spot');
+  spot.style.top = (r.top - pad) + 'px'; spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px'; spot.style.height = (r.height + pad * 2) + 'px';
+  const bub = document.getElementById('coach-bubble');
+  const bh = bub.offsetHeight, bw = bub.offsetWidth, vh = window.innerHeight, vw = window.innerWidth;
+  const sous = r.bottom + pad + 14 + bh <= vh - 8;
+  let top = sous ? r.bottom + pad + 14 : Math.max(8, r.top - pad - 14 - bh);
+  let left = Math.min(Math.max(16, r.left + r.width / 2 - bw / 2), vw - bw - 16);
+  bub.style.top = top + 'px'; bub.style.left = left + 'px';
+}
+window.addEventListener('resize', () => { if (document.getElementById('coach')?.classList.contains('show')) coachPlace(); });
+function coachNext() {
+  const b = coachList[coachIdx];
+  if (b && b.action) { const a = b.action; b.action = null; try { a(); } catch(e) {} if (b.attendre) return; }
+  coachAdvance();
+}
+function coachAdvance() {
+  if (coachIdx < coachList.length - 1) { coachIdx++; coachRender(); }
+  else coachStop(false);
+}
+function coachStop(passer) {
+  document.getElementById('coach').classList.remove('show');
+  tutoActive = false;
+  const fin = coachOnEnd; coachOnEnd = null;
+  if (tutoDemo) tutoDemoCleanup();
+  if (coachScreen) tutoMark(coachScreen);
+  if (fin && !passer) fin();
+}
+
+// ── Exercice guidé : une candidature d'exemple, jamais envoyée au Sheet ─────────
+function tutoDemoStart() {
+  if (tutoActive || currentScreenName() !== 'youth') return;
+  tutoDemo = true;
+  const etapes = [
+    { v: 1, cible: '.mcand-fab-m', texte: "Pour ajouter une candidature, touchez le bouton +. Essayons avec un exemple : il sera supprimé à la fin.", bouton: 'Essayer',
+      attendre: true, action: () => { tutoDemoOpen(); setTimeout(() => { coachIdx = 1; coachRender(); }, 350); } },
+    { v: 1, cible: '#btn-save', texte: "Les informations sont déjà remplies. Vérifiez-les, puis enregistrez.", bouton: 'Enregistrer',
+      attendre: true, action: () => { saveCandidature().then(() => setTimeout(() => { coachIdx = 2; coachRender(); }, 350)); } },
+    { v: 1, cible: '.cand-card, .bloc-card, .kanban-card', texte: "Voici votre candidature. Touchez une carte pour la modifier ou changer son statut quand vous recevez une réponse." },
+    { v: 1, cible: '.mcand-viewswitch-m', texte: "Ces boutons changent la présentation : liste, grille ou colonnes par statut." },
+    { v: 1, cible: '.mcand-fab-m', texte: "C'est tout. L'exemple va disparaître : à vous de jouer !", bouton: "Supprimer l'exemple" },
+  ];
+  coachStart(etapes, 'youth', null, true);
+}
+function currentScreenName() {
+  const a = document.querySelector('.screen.active'); return a ? a.id.replace('screen-', '') : '';
+}
+function tutoDemoOpen() {
+  openModal();
+  document.getElementById('f-type').value = 'Apprentissage';
+  document.getElementById('f-enterprise').value = 'Entreprise Exemple';
+  document.getElementById('f-metier').value = 'Employé de commerce CFC';
+  document.getElementById('f-statut').value = 'Envoyée';
+  onStatutChange('Envoyée');
+}
+function tutoDemoCleanup() {
+  tutoDemo = false;
+  document.getElementById('modal-overlay').classList.remove('open');
+  editingId = null; pendingAlertId = null;
+  if (allData[currentUser]) allData[currentUser] = allData[currentUser].filter(i => !isDemoId(i.id));
+  renderYouth(); renderDashboardMobile();
+}
 
 // ── SERVICE WORKER ────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
