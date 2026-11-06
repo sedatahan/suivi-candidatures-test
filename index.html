@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.06-2">
+<meta name="app-version" content="2026.11.06-3">
 <meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -1632,12 +1632,20 @@ tr:last-child td { border-bottom: none; }
 .tuto-dot.on{background:var(--m-accent, #3730A3);width:22px;border-radius:8px}
 .tuto-next{background:var(--m-accent, #3730A3);color:oklch(98% 0.005 80);border:none;border-radius:14px;padding:14px 26px;font:inherit;font-size:16px;font-weight:600;cursor:pointer}
 #coach{position:fixed;inset:0;z-index:3000;display:none}
-#coach.show{display:block}
+#coach.show{display:block;pointer-events:none}
+#coach .coach-block,#coach .coach-mask,#coach .coach-bubble{pointer-events:auto}
 #coach .coach-block{position:absolute;inset:0}
+#coach .coach-mask{position:fixed;display:none;background:transparent}
+#coach.interactif .coach-block{display:none}
+#coach.interactif .coach-mask{display:block}
+#coach .coach-text ul{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:5px}
+#coach .coach-text li{font-size:13px;line-height:1.35}
+#coach .coach-text li b{font-weight:700}
 #coach .coach-spot{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px oklch(22% 0.01 80 / .62);pointer-events:none;transition:all .28s cubic-bezier(0.16,1,0.3,1)}
 #coach .coach-bubble{position:fixed;width:min(320px,calc(100vw - 32px));background:oklch(99% 0.003 80);color:oklch(22% 0.01 80);border-radius:16px;padding:16px 16px 14px;box-shadow:0 10px 34px oklch(22% 0.01 80 / .3);transition:top .28s cubic-bezier(0.16,1,0.3,1),left .28s cubic-bezier(0.16,1,0.3,1)}
 #coach .coach-count{font-size:12px;font-weight:600;color:var(--m-accent, #3730A3);margin-bottom:6px}
 #coach .coach-text{font-size:15px;line-height:1.45;margin:0 0 14px}
+#coach .coach-next.cache{display:none}
 #coach .coach-actions{display:flex;justify-content:space-between;align-items:center;gap:10px}
 #coach .coach-skip{background:none;border:none;font:inherit;font-size:13px;color:oklch(52% 0.02 80);padding:6px 2px;cursor:pointer}
 #coach .coach-next{background:var(--m-accent, #3730A3);color:oklch(98% 0.005 80);border:none;border-radius:12px;padding:10px 18px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
@@ -2349,11 +2357,12 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 <div id="coach" aria-live="polite">
-  <div class="coach-block"></div>
+  <div class="coach-block" id="coach-block"></div>
+  <div class="coach-mask" id="coach-m-t"></div><div class="coach-mask" id="coach-m-b"></div><div class="coach-mask" id="coach-m-l"></div><div class="coach-mask" id="coach-m-r"></div>
   <div class="coach-spot" id="coach-spot"></div>
   <div class="coach-bubble" id="coach-bubble" role="dialog">
     <div class="coach-count" id="coach-count"></div>
-    <p class="coach-text" id="coach-text"></p>
+    <div class="coach-text" id="coach-text"></div>
     <div class="coach-actions">
       <button class="coach-skip" onclick="coachStop(true)">Passer le tutoriel</button>
       <button class="coach-next" id="coach-next" onclick="coachNext()">Suivant</button>
@@ -4256,7 +4265,7 @@ function onStatutChange(val) {
   if (field) field.style.display = val === 'Reportée' ? 'block' : 'none';
   const sf = document.getElementById('stage-field');
   if (sf) sf.style.display = val === 'Stage' ? 'block' : 'none';
-  if (val === 'Stage' && !stageAsked) {
+  if (val === 'Stage' && !stageAsked && !tutoDemo) {
     stageAsked = true;
     askStage({ stage_debut: document.getElementById('f-stage-debut').value, stage_fin: document.getElementById('f-stage-fin').value }).then(r => {
       if (!r) return;
@@ -6491,16 +6500,17 @@ const TUTO_INTRO = [
 ];
 const TUTO_BULLES = {
   dashboard: [
+    { v: 1, cible: '.mdash-grid', texte: "Voici votre dashboard, la page d'accueil. Les grandes cases sont des raccourcis : vos candidatures, vos relances et les annonces." },
     { v: 1, cible: '#mdash-stats', texte: "Vos chiffres en un coup d'œil : candidatures envoyées, entretiens, reportées et refus." },
-    { v: 1, cible: '.mdash-tile-relances', texte: "Ici, les candidatures restées sans réponse depuis 10 jours. C'est le bon moment pour relancer." },
-    { v: 1, cible: '#mobile-bottom-nav', texte: "Le menu du bas vous mène à vos candidatures, aux annonces et à votre profil." },
+    { v: 1, cible: '.mdash-tile-relances', texte: "Les relances : ce sont les candidatures restées sans réponse depuis 10 jours. C'est le bon moment pour relancer l'entreprise." },
+    { v: 1, cible: '#mobile-bottom-nav', texte: "Le menu du bas vous mène à vos candidatures, aux annonces et à votre profil. Passons aux candidatures.", bouton: 'Suivant' },
   ],
   alertes: [
-    { v: 1, cible: '#alertes-body', texte: "Les nouvelles places qui correspondent à vos projets s'affichent ici. Touchez une annonce pour postuler : la candidature se prépare toute seule." },
+    { v: 1, cible: '.alertes-header', cibleAlt: '.alerte-card', pos: 'bas', bouton: 'Suivant', texte: "Ici apparaissent les nouvelles places qui correspondent à vos projets. Touchez une annonce pour postuler : la candidature se prépare toute seule." },
   ],
   profil: [
-    { v: 1, cible: '#mprofil-favoris-list', texte: "Vos projets favoris : choisissez jusqu'à 3 métiers pour recevoir les annonces qui vous concernent." },
-    { v: 1, cible: '#mprofil-notif-main', texte: "Activez les notifications pour être prévenu des relances et des nouvelles places." },
+    { v: 1, cible: '#mprofil-favoris-list', pos: 'bas', texte: "Vos projets favoris : choisissez jusqu'à 3 métiers pour recevoir les annonces qui vous concernent." },
+    { v: 1, cible: '#mprofil-notif-main', pos: 'haut', texte: "Activez les notifications pour être prévenu des relances et des nouvelles places. Le tutoriel est terminé !", bouton: 'Terminer' },
   ],
 };
 const TUTO_VERSIONS = { intro: 1, dashboard: 1, youth: 1, alertes: 1, profil: 1 };
@@ -6561,7 +6571,12 @@ function tutoOnScreen(name) {
     return;
   }
   const liste = (TUTO_BULLES[name] || []).filter(b => b.v > (st[name] || 0));
-  if (liste.length) setTimeout(() => { if (!tutoActive) coachStart(liste, name); }, 450);
+  if (liste.length) setTimeout(() => {
+    if (tutoActive) return;
+    // La cible de repli (ex. l'en-tête) sert si la cible préférée (ex. une annonce) n'existe pas
+    const finale = liste.map(b => Object.assign({}, b, { cible: (b.cibleAlt && document.querySelector(b.cibleAlt)) ? b.cibleAlt : b.cible }));
+    coachStart(finale, name, () => tutoNextScreen(name));
+  }, name === 'alertes' ? 1300 : 450);
 }
 
 // ── Cartes d'introduction ────────────────────────────────────────────────────
@@ -6594,49 +6609,87 @@ function tutoIntroEnd() {
 }
 
 // ── Bulles ───────────────────────────────────────────────────────────────────
+// Chaque étape : cible (sélecteur), texte (HTML autorisé, contenu fixe), bouton (libellé),
+// pos ('haut' | 'bas'), interactif (le jeune touche vraiment l'élément ; le reste est masqué),
+// extra (sélecteurs supplémentaires gardés cliquables), attend() (condition pour passer à la suite),
+// sansBouton (pas de bouton Suivant), avant() (préparation à l'affichage).
+let coachTimer = null;
 function coachStart(liste, screen, onEnd, forcer) {
-  const visibles = forcer ? liste : liste.filter(b => { const el = document.querySelector(b.cible); return el && el.offsetParent !== null || (el && getComputedStyle(el).position === 'fixed'); });
+  const visibles = forcer ? liste : liste.filter(b => { const el = document.querySelector(b.cible); return el && (el.offsetParent !== null || getComputedStyle(el).position === 'fixed'); });
   if (!visibles.length) { if (screen) tutoMark(screen); if (onEnd) onEnd(); return; }
   tutoActive = true; coachList = visibles; coachIdx = 0; coachScreen = screen; coachOnEnd = onEnd || null;
   document.getElementById('coach').classList.add('show');
   coachRender();
 }
+function coachElRect(b) {
+  const el = document.querySelector(b.cible); if (!el) return null;
+  const r = el.getBoundingClientRect();
+  let top = r.top, left = r.left, right = r.right, bottom = r.bottom;
+  (b.extra || []).forEach(sel => {
+    const e = document.querySelector(sel);
+    if (e && e.offsetParent !== null && getComputedStyle(e).display !== 'none') {
+      const q = e.getBoundingClientRect();
+      top = Math.min(top, q.top); left = Math.min(left, q.left); right = Math.max(right, q.right); bottom = Math.max(bottom, q.bottom);
+    }
+  });
+  return { top, left, right, bottom, width: right - left, height: bottom - top };
+}
 function coachRender() {
+  clearInterval(coachTimer);
   const b = coachList[coachIdx];
+  if (b.avant) { try { b.avant(); } catch(e) {} }
   const el = document.querySelector(b.cible);
-  if (!el) { coachNext(); return; }
+  if (!el) { coachAdvance(); return; }
   try { el.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch(e) { el.scrollIntoView(); }
+  document.getElementById('coach').classList.toggle('interactif', !!b.interactif);
   document.getElementById('coach-count').textContent = coachList.length > 1 ? (coachIdx + 1) + ' sur ' + coachList.length : '';
-  document.getElementById('coach-text').textContent = b.texte;
-  document.getElementById('coach-next').textContent = b.bouton || (coachIdx === coachList.length - 1 ? 'Terminer' : 'Suivant');
+  document.getElementById('coach-text').innerHTML = typeof b.texte === 'function' ? b.texte() : b.texte;
+  const nx = document.getElementById('coach-next');
+  nx.textContent = b.bouton || (coachIdx === coachList.length - 1 ? 'Terminer' : 'Suivant');
+  nx.classList.toggle('cache', !!b.sansBouton);
   setTimeout(coachPlace, 60);
+  const idx = coachIdx;
+  coachTimer = setInterval(() => {
+    if (coachIdx !== idx) return;
+    coachPlace();
+    if (b.attend && b.attend()) { clearInterval(coachTimer); setTimeout(() => { if (coachIdx === idx && tutoActive) coachAdvance(); }, 350); }
+  }, 250);
 }
 function coachPlace() {
   const b = coachList[coachIdx]; if (!b) return;
-  const el = document.querySelector(b.cible); if (!el) return;
-  const r = el.getBoundingClientRect(), pad = 6;
+  const r = coachElRect(b); if (!r) return;
+  const pad = 6, vw = window.innerWidth, vh = window.innerHeight;
   const spot = document.getElementById('coach-spot');
-  spot.style.top = (r.top - pad) + 'px'; spot.style.left = (r.left - pad) + 'px';
-  spot.style.width = (r.width + pad * 2) + 'px'; spot.style.height = (r.height + pad * 2) + 'px';
+  const T = r.top - pad, L = r.left - pad, W = r.width + pad * 2, H = r.height + pad * 2;
+  spot.style.top = T + 'px'; spot.style.left = L + 'px'; spot.style.width = W + 'px'; spot.style.height = H + 'px';
+  const set = (id, t, l, w, h) => { const m = document.getElementById(id); m.style.top = t + 'px'; m.style.left = l + 'px'; m.style.width = Math.max(0, w) + 'px'; m.style.height = Math.max(0, h) + 'px'; };
+  set('coach-m-t', 0, 0, vw, Math.max(0, T));
+  set('coach-m-b', T + H, 0, vw, vh - (T + H));
+  set('coach-m-l', T, 0, Math.max(0, L), H);
+  set('coach-m-r', T, L + W, vw - (L + W), H);
   const bub = document.getElementById('coach-bubble');
-  const bh = bub.offsetHeight, bw = bub.offsetWidth, vh = window.innerHeight, vw = window.innerWidth;
-  const sous = r.bottom + pad + 14 + bh <= vh - 8;
-  let top = sous ? r.bottom + pad + 14 : Math.max(8, r.top - pad - 14 - bh);
-  let left = Math.min(Math.max(16, r.left + r.width / 2 - bw / 2), vw - bw - 16);
+  const bh = bub.offsetHeight, bw = bub.offsetWidth;
+  const placeBas = r.bottom + pad + 14 + bh <= vh - 8;
+  const placeHaut = r.top - pad - 14 - bh >= 8;
+  let bas = b.pos === 'haut' ? !placeHaut : b.pos === 'bas' ? placeBas || !placeHaut : placeBas;
+  let top = bas ? Math.min(r.bottom + pad + 14, vh - bh - 8) : Math.max(8, r.top - pad - 14 - bh);
+  const left = Math.min(Math.max(16, r.left + r.width / 2 - bw / 2), vw - bw - 16);
   bub.style.top = top + 'px'; bub.style.left = left + 'px';
 }
 window.addEventListener('resize', () => { if (document.getElementById('coach')?.classList.contains('show')) coachPlace(); });
 function coachNext() {
   const b = coachList[coachIdx];
-  if (b && b.action) { const a = b.action; b.action = null; try { a(); } catch(e) {} if (b.attendre) return; }
+  if (b && b.action) { const a = b.action; b.action = null; try { a(); } catch(e) {} }
   coachAdvance();
 }
 function coachAdvance() {
+  clearInterval(coachTimer);
   if (coachIdx < coachList.length - 1) { coachIdx++; coachRender(); }
   else coachStop(false);
 }
 function coachStop(passer) {
-  document.getElementById('coach').classList.remove('show');
+  clearInterval(coachTimer);
+  const c = document.getElementById('coach'); c.classList.remove('show'); c.classList.remove('interactif');
   tutoActive = false;
   const fin = coachOnEnd; coachOnEnd = null;
   if (tutoDemo) tutoDemoCleanup();
@@ -6644,31 +6697,69 @@ function coachStop(passer) {
   if (fin && !passer) fin();
 }
 
+// Enchaînement automatique des écrans : dashboard, candidatures, annonces, profil
+function tutoPending(st, name) {
+  if (name === 'youth') return (st.youth || 0) < TUTO_VERSIONS.youth;
+  return (TUTO_BULLES[name] || []).some(b => b.v > (st[name] || 0));
+}
+function tutoNextScreen(current) {
+  const ordre = ['dashboard', 'youth', 'alertes', 'profil'];
+  const st = tutoLoad();
+  for (let i = ordre.indexOf(current) + 1; i < ordre.length; i++) {
+    if (tutoPending(st, ordre[i])) { goMobile(ordre[i]); return; }
+  }
+  if (current !== 'dashboard') goMobile('dashboard');
+}
+
 // ── Exercice guidé : une candidature d'exemple, jamais envoyée au Sheet ─────────
+// Le jeune touche vraiment les éléments ; le reste de l'écran est masqué.
 function tutoDemoStart() {
   if (tutoActive || currentScreenName() !== 'youth') return;
   tutoDemo = true;
+  const aDesFavoris = youthFavoris.length > 0;
   const etapes = [
-    { v: 1, cible: '.mcand-fab-m', texte: "Pour ajouter une candidature, touchez le bouton +. Essayons avec un exemple : il sera supprimé à la fin.", bouton: 'Essayer',
-      attendre: true, action: () => { tutoDemoOpen(); setTimeout(() => { coachIdx = 1; coachRender(); }, 350); } },
-    { v: 1, cible: '#btn-save', texte: "Les informations sont déjà remplies. Vérifiez-les, puis enregistrez.", bouton: 'Enregistrer',
-      attendre: true, action: () => { saveCandidature().then(() => setTimeout(() => { coachIdx = 2; coachRender(); }, 350)); } },
-    { v: 1, cible: '.cand-card, .bloc-card, .kanban-card', texte: "Voici votre candidature. Touchez une carte pour la modifier ou changer son statut quand vous recevez une réponse." },
-    { v: 1, cible: '.mcand-viewswitch-m', texte: "Ces boutons changent la présentation : liste, grille ou colonnes par statut." },
-    { v: 1, cible: '.mcand-fab-m', texte: "C'est tout. L'exemple va disparaître : à vous de jouer !", bouton: "Supprimer l'exemple" },
+    { v: 1, cible: '.mcand-fab-m', interactif: true, sansBouton: true, pos: 'haut',
+      texte: "Pour ajouter une candidature, touchez le bouton <b>+</b>. Nous allons en créer une d'exemple.",
+      attend: () => document.getElementById('modal-overlay').classList.contains('open') },
+    { v: 1, cible: '#f-metier', interactif: true, sansBouton: true, pos: 'haut', extra: ['#metier-suggestions'],
+      avant: () => tutoDemoPrefill(),
+      texte: aDesFavoris
+        ? "Touchez le champ <b>Métier</b> : vos métiers favoris apparaissent directement. Choisissez-en un."
+        : "Touchez le champ <b>Métier</b> et tapez quelques lettres, par exemple « commerce ». Quand vous aurez défini vos projets favoris, ils apparaîtront directement ici.",
+      attend: () => METIERS_SUISSE.includes(document.getElementById('f-metier').value.trim()) },
+    { v: 1, cible: '#f-statut', interactif: true, pos: 'haut', bouton: 'Garder « Envoyée »',
+      texte: "Choisissez le <b>statut</b>. Il se met à jour au fil des réponses :<ul>"
+        + "<li><b>Envoyée</b> : la candidature est partie, vous attendez une réponse.</li>"
+        + "<li><b>Relancée</b> : vous avez relancé l'entreprise.</li>"
+        + "<li><b>Entretien</b> : on vous a invité à un entretien.</li>"
+        + "<li><b>Refus</b> : la réponse est négative.</li>"
+        + "<li><b>Reportée</b> : la décision est remise à plus tard.</li>"
+        + "<li><b>Stage</b> : un stage est confirmé.</li></ul>",
+      attend: () => document.getElementById('f-statut').dataset.tutoTouched === '1' },
+    { v: 1, cible: '#btn-save', interactif: true, sansBouton: true,
+      texte: "C'est prêt. Touchez <b>Enregistrer</b>.",
+      attend: () => (allData[currentUser] || []).some(i => isDemoId(i.id)) },
+    { v: 1, cible: '.cand-card, .bloc-card, .kanban-card', pos: 'bas',
+      texte: "Voici votre candidature. Touchez une carte pour la modifier ou changer son statut quand vous recevez une réponse." },
+    { v: 1, cible: '.mcand-viewswitch-m', pos: 'bas', texte: "Ces boutons changent la présentation : liste, grille ou colonnes par statut." },
+    { v: 1, cible: '.mcand-fab-m', pos: 'haut', bouton: "Supprimer l'exemple",
+      texte: "C'est tout pour les candidatures. L'exemple va disparaître : à vous de jouer !" },
   ];
-  coachStart(etapes, 'youth', null, true);
+  coachStart(etapes, 'youth', () => tutoNextScreen('youth'), true);
 }
 function currentScreenName() {
   const a = document.querySelector('.screen.active'); return a ? a.id.replace('screen-', '') : '';
 }
-function tutoDemoOpen() {
-  openModal();
+function tutoDemoPrefill() {
   document.getElementById('f-type').value = 'Apprentissage';
   document.getElementById('f-enterprise').value = 'Entreprise Exemple';
-  document.getElementById('f-metier').value = 'Employé de commerce CFC';
+  document.getElementById('f-metier').value = '';
   document.getElementById('f-statut').value = 'Envoyée';
   onStatutChange('Envoyée');
+  const st = document.getElementById('f-statut');
+  st.dataset.tutoTouched = '';
+  if (!st.dataset.tutoListen) { st.dataset.tutoListen = '1'; st.addEventListener('change', () => { st.dataset.tutoTouched = '1'; }); }
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
 function tutoDemoCleanup() {
   tutoDemo = false;
