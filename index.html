@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.05-1">
+<meta name="app-version" content="2026.11.06-1">
 <meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -1605,6 +1605,11 @@ tr:last-child td { border-bottom: none; }
 .cand-card.stage-a-enregistrer,.bloc-card.stage-a-enregistrer,.kanban-card.stage-a-enregistrer,#screen-youth .cand-card.stage-a-enregistrer,#screen-youth .bloc-card.stage-a-enregistrer,#screen-youth .kanban-card.stage-a-enregistrer{border:2px solid oklch(52% 0.19 27);background:oklch(97% 0.02 27);box-shadow:none}
 .stage-done{background:var(--stage-bg);color:var(--stage-text);padding:2px 8px;border-radius:10px}
 .stage-doc{color:var(--stage-text);font-weight:600}
+.stage-hint{font-size:12px;color:var(--text2);margin:2px 0 6px}
+.stage-date-input{min-height:48px;font-size:16px !important;padding:10px 12px !important;border:2px solid var(--stage-dot) !important;border-radius:12px !important;background:var(--stage-bg) !important;color:var(--text);width:100%;box-sizing:border-box}
+.stage-rapport-btn{display:inline-block;background:oklch(55% 0.15 55);color:oklch(98% 0.01 55) !important;padding:6px 12px;border-radius:10px;font-weight:700;text-decoration:none}
+.stage-rapport-todo{background:oklch(55% 0.15 55);color:oklch(98% 0.01 55);padding:3px 10px;border-radius:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.cand-card.stage-rapport,.bloc-card.stage-rapport,.kanban-card.stage-rapport,#screen-youth .cand-card.stage-rapport,#screen-youth .bloc-card.stage-rapport,#screen-youth .kanban-card.stage-rapport{border:2px solid oklch(55% 0.15 55);background:oklch(96% 0.035 75);box-shadow:none}
 .stage-dates{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:16px}
 @media (min-width:420px){.stage-dates{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .stage-dates label{min-width:0;font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:4px}
@@ -2168,11 +2173,14 @@ tr:last-child td { border-bottom: none; }
       </div>
       <div class="field" id="stage-field" style="display:none">
         <div class="form-row">
-          <div class="field"><label>Début du stage</label><input type="date" id="f-stage-debut"></div>
-          <div class="field"><label>Fin du stage</label><input type="date" id="f-stage-fin"></div>
+          <div class="field"><label>Premier jour du stage</label><input type="date" id="f-stage-debut" class="stage-date-input"></div>
+          <div class="field"><label>Dernier jour du stage</label><input type="date" id="f-stage-fin" class="stage-date-input"></div>
         </div>
+        <div class="stage-hint">Touchez une case pour choisir une date.</div>
         <label class="remember-code" style="margin:4px 0 6px"><input type="checkbox" id="f-stage-enreg"> Le formulaire d'enregistrement a été rempli</label>
         <a class="stage-doc" href="https://www.ge.ch/document/28319/telecharger" target="_blank" rel="noopener">Ouvrir le formulaire d'enregistrement du stage</a>
+        <label class="remember-code" style="margin:14px 0 6px"><input type="checkbox" id="f-stage-rapport"> Le rapport de stage a été demandé</label>
+        <a class="stage-doc" href="https://www.ge.ch/document/28320/telecharger" target="_blank" rel="noopener">Ouvrir le rapport de stage</a>
       </div>
       <div class="field" id="rappel-field">
         <label>Me rappeler à partir du <span style="font-size:11px;color:var(--text3);font-weight:400">(optionnel)</span></label>
@@ -2299,9 +2307,10 @@ tr:last-child td { border-bottom: none; }
   <div class="stage-box" role="dialog" aria-labelledby="stage-q">
     <h2 id="stage-q">Le formulaire d'enregistrement de stage a-t-il été rempli ?</h2>
     <p>Formulaire : <a class="stage-doc" href="https://www.ge.ch/document/28319/telecharger" target="_blank" rel="noopener">ouvrir le formulaire</a></p>
+    <div class="stage-hint" style="margin-bottom:8px">Touchez une case pour choisir une date.</div>
     <div class="stage-dates">
-      <label>Début du stage<input type="date" id="stage-debut"></label>
-      <label>Fin du stage<input type="date" id="stage-fin"></label>
+      <label>Premier jour du stage<input type="date" id="stage-debut" class="stage-date-input"></label>
+      <label>Dernier jour du stage<input type="date" id="stage-fin" class="stage-date-input"></label>
     </div>
     <div class="stage-actions">
       <button class="btn-secondary" onclick="answerStage(false)">Pas encore</button>
@@ -2870,6 +2879,7 @@ async function gsRead() {
       nom_jeune: r.nom_jeune || '',
       date_ajout: r.date_ajout || '',
       date_rappel: parseSheetDate(r.date_rappel) || '',
+      stage_rapport: String(r.stage_rapport).toLowerCase() === 'oui' ? 'oui' : '',
       stage_debut: parseSheetDate(r.stage_debut) || '',
       stage_fin: parseSheetDate(r.stage_fin) || '',
       stage_enregistre: (r.stage_enregistre === true || String(r.stage_enregistre).toLowerCase() === 'oui' || String(r.stage_enregistre).toLowerCase() === 'true') ? 'oui' : (r.stage_enregistre ? 'non' : ''),
@@ -2914,6 +2924,7 @@ async function gsAppend(item) {
     stage_debut: item.stage_debut || '',
     stage_fin: item.stage_fin || '',
     stage_enregistre: item.stage_enregistre || '',
+    stage_rapport: item.stage_rapport || '',
   };
   const url = gsUrl('write', '&row=' + encodeURIComponent(JSON.stringify(row)));
   await fetch(url);
@@ -2937,6 +2948,7 @@ async function gsUpdate(item) {
     stage_debut: item.stage_debut || '',
     stage_fin: item.stage_fin || '',
     stage_enregistre: item.stage_enregistre || '',
+    stage_rapport: item.stage_rapport || '',
   };
   const url = gsUrl('update', '&row=' + encodeURIComponent(JSON.stringify(row)));
   await fetch(url);
@@ -3396,8 +3408,8 @@ function renderYouth() {
 
   // Tri : rappels échus > followup > date récente
   let sorted = [...items].sort((a,b) => {
-    const ar = needsStageReg(a) ? 3 : needsRappel(a) ? 2 : needsFollowUp(a) ? 1 : 0;
-    const br = needsStageReg(b) ? 3 : needsRappel(b) ? 2 : needsFollowUp(b) ? 1 : 0;
+    const ar = needsStageReg(a) ? 4 : needsRapportStage(a) ? 3 : needsRappel(a) ? 2 : needsFollowUp(a) ? 1 : 0;
+    const br = needsStageReg(b) ? 4 : needsRapportStage(b) ? 3 : needsRappel(b) ? 2 : needsFollowUp(b) ? 1 : 0;
     if (br !== ar) return br - ar;
     return new Date(b.date||0) - new Date(a.date||0);
   });
@@ -3447,7 +3459,7 @@ function renderList(list, items) {
     const followup = needsFollowUp(item);
     const rappel = needsRappel(item);
     const days = daysSince(item.date);
-    const cardClass = needsStageReg(item) ? ' stage-a-enregistrer' : rappel ? ' rappel-due' : followup ? ' followup' : '';
+    const cardClass = needsStageReg(item) ? ' stage-a-enregistrer' : needsRapportStage(item) ? ' stage-rapport' : rappel ? ' rappel-due' : followup ? ' followup' : '';
     return '<div class="cand-card' + cardClass + '" onclick="openModal(\'' + item.id + '\')">'
       + '<div class="cand-top"><div>'
       + '<div class="cand-enterprise">' + item.entreprise + '</div>'
@@ -3469,7 +3481,7 @@ function renderBloc(list, items) {
   list.innerHTML = '<div class="bloc-grid">' + items.map(item => {
     const followup = needsFollowUp(item);
     const rappel = needsRappel(item);
-    const cardClass = needsStageReg(item) ? ' stage-a-enregistrer' : rappel ? ' rappel-due' : followup ? ' followup' : '';
+    const cardClass = needsStageReg(item) ? ' stage-a-enregistrer' : needsRapportStage(item) ? ' stage-rapport' : rappel ? ' rappel-due' : followup ? ' followup' : '';
     return '<div class="bloc-card' + cardClass + '" onclick="openModal(\'' + item.id + '\')">'
       + '<span class="badge badge-' + item.statut + '" style="align-self:flex-start">' + item.statut + '</span>'
       + '<div class="bloc-enterprise">' + item.entreprise + '</div>'
@@ -3498,8 +3510,8 @@ function renderKanban(list, items) {
     const cards = items
       .filter(i => i.statut === statut)
       .sort((a, b) => {
-        const ar = needsStageReg(a) ? 3 : needsRappel(a) ? 2 : needsFollowUp(a) ? 1 : 0;
-        const br = needsStageReg(b) ? 3 : needsRappel(b) ? 2 : needsFollowUp(b) ? 1 : 0;
+        const ar = needsStageReg(a) ? 4 : needsRapportStage(a) ? 3 : needsRappel(a) ? 2 : needsFollowUp(a) ? 1 : 0;
+        const br = needsStageReg(b) ? 4 : needsRapportStage(b) ? 3 : needsRappel(b) ? 2 : needsFollowUp(b) ? 1 : 0;
         if (br !== ar) return br - ar;
         return new Date(b.date||0) - new Date(a.date||0);
       });
@@ -3509,7 +3521,7 @@ function renderKanban(list, items) {
           const followup = needsFollowUp(item);
           const rappel = needsRappel(item);
           const days = daysSince(item.date);
-          const cardClass = needsStageReg(item) ? ' stage-a-enregistrer' : rappel ? ' rappel-due' : followup ? ' followup' : '';
+          const cardClass = needsStageReg(item) ? ' stage-a-enregistrer' : needsRapportStage(item) ? ' stage-rapport' : rappel ? ' rappel-due' : followup ? ' followup' : '';
 
           const tooltipRows = [];
           if (item.contact) tooltipRows.push('<div class="kt-row"><span class="kt-label">Contact</span><span class="kt-val">' + item.contact + '</span></div>');
@@ -3562,6 +3574,7 @@ function openModal(id) {
   document.getElementById('f-stage-debut').value = item?.stage_debut || '';
   document.getElementById('f-stage-fin').value = item?.stage_fin || '';
   document.getElementById('f-stage-enreg').checked = item?.stage_enregistre === 'oui';
+  document.getElementById('f-stage-rapport').checked = item?.stage_rapport === 'oui';
   stageAsked = !!item && item.statut === 'Stage';
   onStatutChange(item?.statut || 'Envoyée');
   document.getElementById('f-contact').value = item?.contact || '';
@@ -3615,6 +3628,7 @@ async function saveCandidature() {
     stage_debut: document.getElementById('f-statut').value === 'Stage' ? document.getElementById('f-stage-debut').value : '',
     stage_fin: document.getElementById('f-statut').value === 'Stage' ? document.getElementById('f-stage-fin').value : '',
     stage_enregistre: document.getElementById('f-statut').value === 'Stage' ? (document.getElementById('f-stage-enreg').checked ? 'oui' : 'non') : '',
+    stage_rapport: document.getElementById('f-statut').value === 'Stage' && document.getElementById('f-stage-rapport').checked ? 'oui' : '',
     date_ajout: editingId ? null : new Date().toISOString(),
   };
 
@@ -4199,9 +4213,12 @@ function stageLineHTML(item) {
   const aEnreg = item.stage_enregistre !== 'oui';
   const dates = item.stage_debut || item.stage_fin
     ? '<span>' + (item.stage_debut ? formatDate(item.stage_debut) : '?') + ' → ' + (item.stage_fin ? formatDate(item.stage_fin) : '?') + '</span>' : '';
+  const rapport = needsRapportStage(item);
   return '<div class="stage-line">'
     + (aEnreg ? '<span class="stage-todo">À enregistrer</span>' : '<span class="stage-done">Enregistré</span>')
-    + dates + '</div>';
+    + (rapport ? '<span class="stage-rapport-todo">Rapport de stage</span>' : '')
+    + dates + '</div>'
+    + (rapport ? '<div class="stage-line"><a class="stage-rapport-btn" href="' + STAGE_RAPPORT_URL + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Ouvrir le rapport de stage</a></div>' : '');
 }
 function askStage(item) {
   return new Promise(resolve => {
@@ -4223,6 +4240,11 @@ function needsFollowUp(item) {
   if (!['Envoyée','Relancée'].includes(item.statut)) return false;
   const days = daysSince(item.date);
   return days !== null && days >= 10;
+}
+
+function needsRapportStage(item) {
+  if (item.statut !== 'Stage' || item.stage_rapport === 'oui' || !item.stage_fin) return false;
+  return String(item.stage_fin).slice(0,10) <= todayISO();
 }
 
 function needsStageReg(item) {
