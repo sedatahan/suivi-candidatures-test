@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.06-5">
+<meta name="app-version" content="2026.11.09-1">
 <meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -5949,8 +5949,15 @@ function isMetierValid() {
 }
 
 
+const METIERS_EXEMPLES_TUTO = ['Employé de commerce CFC', 'Gestionnaire du commerce de détail CFC', 'Cuisinier CFC', 'Informaticien CFC'];
 function showMetierSuggestionsOnFocus() {
   const val = document.getElementById('f-metier').value;
+  if (tutoDemo && !youthFavoris.length) {
+    const list = document.getElementById('metier-suggestions');
+    list.innerHTML = METIERS_EXEMPLES_TUTO.map(m => '<div class="autocomplete-item" onmousedown="selectMetier(\'' + m + '\')">' + m + '</div>').join('');
+    list.style.display = 'block';
+    return;
+  }
   if (!val && youthFavoris.length > 0) {
     const list = document.getElementById('metier-suggestions');
     selectedSuggestionIdx = -1;
@@ -6509,7 +6516,7 @@ const TUTO_BULLES = {
     { v: 1, cible: '#mobile-bottom-nav', texte: "Le menu du bas vous mène à vos candidatures, aux annonces et à votre profil. Passons aux candidatures.", bouton: 'Suivant' },
   ],
   alertes: [
-    { v: 1, cible: '.alertes-header', cibleAlt: '.alerte-card', pos: 'bas', bouton: 'Suivant', texte: "Les annonces apparaissent en fonction des projets favoris que vous avez définis dans votre profil. Touchez une annonce pour postuler : la candidature se prépare toute seule." },
+    { v: 1, cible: '.alertes-header', cibleAlt: '.alerte-card', cibleSans: '#alertes-body .empty-state', texteSans: "Tant que vous n'avez pas défini vos projets, il n'y a pas d'annonce. Une fois vos projets définis avec le bouton <b>Définir mes projets</b>, les annonces correspondantes apparaîtront sur cet écran.", pos: 'bas', bouton: 'Suivant', texte: "Les annonces apparaissent en fonction des projets favoris que vous avez définis dans votre profil. Touchez une annonce pour postuler : la candidature se prépare toute seule." },
   ],
   profil: [
     { v: 1, cible: '#mprofil-favoris-list', pos: 'bas', texte: "Vos projets favoris : choisissez jusqu'à 3 métiers pour recevoir les annonces qui vous concernent." },
@@ -6577,7 +6584,10 @@ function tutoOnScreen(name) {
   if (liste.length) setTimeout(() => {
     if (tutoActive) return;
     // La cible de repli (ex. l'en-tête) sert si la cible préférée (ex. une annonce) n'existe pas
-    const finale = liste.map(b => Object.assign({}, b, { cible: (b.cibleAlt && document.querySelector(b.cibleAlt)) ? b.cibleAlt : b.cible }));
+    const finale = liste.map(b => {
+      if (b.cibleSans && !youthFavoris.length && document.querySelector(b.cibleSans)) return Object.assign({}, b, { cible: b.cibleSans, texte: b.texteSans });
+      return Object.assign({}, b, { cible: (b.cibleAlt && document.querySelector(b.cibleAlt)) ? b.cibleAlt : b.cible });
+    });
     coachStart(finale, name, () => tutoNextScreen(name));
   }, name === 'alertes' ? 1300 : 450);
 }
@@ -6777,13 +6787,13 @@ function tutoDemoStart() {
       texte: "Choisissez d'abord le <b>type de demande</b> : <b>Stage</b> pour un stage, <b>Apprentissage</b> pour une place d'apprentissage.",
       attend: () => document.getElementById('f-type').value !== '' },
     { v: 1, cible: '#f-metier', interactif: true, sansBouton: true, pos: 'haut', extra: ['#metier-suggestions'],
-      avant: () => { if (youthFavoris.length) document.getElementById('f-metier').setAttribute('inputmode', 'none'); },
+      avant: () => { const f = document.getElementById('f-metier'); f.setAttribute('inputmode', 'none'); f.setAttribute('readonly', 'readonly'); },
       texte: aDesFavoris
         ? "Touchez le champ <b>Métier</b> : vos métiers favoris apparaissent directement. Choisissez-en un."
-        : "Touchez le champ <b>Métier</b> et tapez quelques lettres, par exemple « commerce ». Quand vous aurez défini vos projets favoris, ils apparaîtront directement ici.",
+        : "Touchez le champ <b>Métier</b> : une liste d'exemples apparaît. Choisissez-en un. Pour une vraie candidature, vous taperez les premières lettres du métier.",
       attend: () => METIERS_SUISSE.includes(document.getElementById('f-metier').value.trim()) },
     { v: 1, cible: '#f-statut', interactif: true, pos: 'haut', bouton: 'Garder « Envoyée »',
-      avant: () => document.getElementById('f-metier').removeAttribute('inputmode'),
+      avant: () => { const f = document.getElementById('f-metier'); f.removeAttribute('inputmode'); f.removeAttribute('readonly'); },
       texte: "Choisissez le <b>statut</b>. Il se met à jour au fil des réponses :<ul>"
         + "<li><b>Envoyée</b> : la candidature est partie, vous attendez une réponse.</li>"
         + "<li><b>Relancée</b> : vous avez relancé l'entreprise.</li>"
@@ -6820,6 +6830,7 @@ function tutoDemoPrefill() {
 function tutoDemoCleanup() {
   tutoDemo = false;
   document.getElementById('f-metier').removeAttribute('inputmode');
+  document.getElementById('f-metier').removeAttribute('readonly');
   document.getElementById('modal-overlay').classList.remove('open');
   editingId = null; pendingAlertId = null;
   if (allData[currentUser]) allData[currentUser] = allData[currentUser].filter(i => !isDemoId(i.id));
