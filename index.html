@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.09-1">
+<meta name="app-version" content="2026.11.17-1">
 <meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -3669,10 +3669,14 @@ function openModal(id) {
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   editingId = null;
+  newCandId = null;
   pendingAlertId = null; // annulation — l'alerte reste active
 }
 
+let savingCand = false;   // empêche un double enregistrement (double touche, réseau lent)
+let newCandId = null;     // identifiant conservé pour toute la durée de la fenêtre : un second envoi ne crée pas de doublon
 async function saveCandidature() {
+  if (savingCand) return;
   const type = document.getElementById('f-type').value;
   const enterprise = document.getElementById('f-enterprise').value.trim();
   const metier = document.getElementById('f-metier').value.trim();
@@ -3688,7 +3692,7 @@ async function saveCandidature() {
   if (!allData[currentUser]) allData[currentUser] = [];
 
   const item = {
-    id: editingId || (tutoDemo ? 'demo_' : '') + genId(),
+    id: editingId || newCandId || (newCandId = (tutoDemo ? 'demo_' : '') + genId()),
     type: type,
     entreprise: enterprise,
     metier: metier,
@@ -3709,6 +3713,7 @@ async function saveCandidature() {
   };
 
   const btnSave = document.getElementById('btn-save');
+  savingCand = true;
   btnSave.textContent = 'Enregistrement...';
   btnSave.disabled = true;
 
@@ -3722,7 +3727,9 @@ async function saveCandidature() {
       if (idx >= 0) allData[currentUser][idx] = item;
       await gsUpdate(item);
     } else {
-      allData[currentUser].push(item);
+      // Un nouvel essai après une erreur réutilise le même identifiant : on remplace au lieu d'ajouter
+      const dej = allData[currentUser].findIndex(i => i.id === item.id);
+      if (dej >= 0) allData[currentUser][dej] = item; else allData[currentUser].push(item);
       await gsAppend(item);
     }
     closeModal();
@@ -3749,6 +3756,7 @@ async function saveCandidature() {
   } catch(e) {
     toast('Erreur lors de la sauvegarde', true);
   }
+  savingCand = false;
   btnSave.textContent = 'Enregistrer';
   btnSave.disabled = false;
 }
