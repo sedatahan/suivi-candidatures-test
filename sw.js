@@ -1,5 +1,5 @@
 // ── SERVICE WORKER — CAP Candidatures ────────────────────────────────────────
-const CACHE_NAME = 'cap-20261117-1437';
+const CACHE_NAME = 'cap-20261117-1439';
 const ASSETS = ['./'];
 
 self.addEventListener('install', e => {
