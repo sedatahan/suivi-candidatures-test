@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.17-7">
+<meta name="app-version" content="2026.11.17-8">
 <meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -6471,7 +6471,8 @@ initPlaneScene({
 // ── MISE À JOUR DE L'APP ─────────────────────────────────────────────────────
 // Une app installée reste en mémoire : sans fermeture complète, elle ne recharge jamais.
 // On compare donc sa version (meta app-version) à celle du serveur, au lancement et au retour au premier plan.
-// Le niveau « major » (meta app-update-level du serveur) affiche l'écran de mise à jour ; « minor » ne fait rien.
+// Le niveau « major » (meta app-update-level du serveur) affiche l'écran de mise à jour (nouvelles fonctionnalités à expliquer) ;
+// « minor » recharge l'app automatiquement quand elle est au calme (voir tenterRechargementAuto).
 // La version et le résultat de la dernière vérification sont visibles en bas du profil (aide au diagnostic).
 const APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || '';
 let lastVersionCheck = 0;
@@ -6528,8 +6529,40 @@ async function checkAppVersion(force) {
       return;
     }
     if (level === 'major') showUpdateScreen();
+    else { miseAJourEnAttente = remoteVersion; tenterRechargementAuto(); }
   } catch(e) { noterVerification({ heure, erreur: true }); /* silencieux : la vérification n'est jamais bloquante */ }
 }
+
+// ── Mise à jour mineure : rechargement automatique quand l'app est au calme ──
+// Conditions : aucune fenêtre ouverte, aucun champ en cours de saisie, aucun tutoriel,
+// et aucune action du jeune depuis 30 secondes (ce qui inclut un retour dans l'app après une absence).
+let miseAJourEnAttente = null;
+let derniereAction = Date.now();
+['pointerdown', 'touchstart', 'keydown', 'scroll', 'click'].forEach(ev =>
+  window.addEventListener(ev, () => { derniereAction = Date.now(); }, { passive: true, capture: true })
+);
+function appAuCalme() {
+  if (document.hidden) return false;
+  if (Date.now() - derniereAction < 30000) return false;
+  if (typeof tutoActive !== 'undefined' && tutoActive) return false;
+  if (typeof savingCand !== 'undefined' && savingCand) return false;
+  const ouvert = sel => [...document.querySelectorAll(sel)].some(e => getComputedStyle(e).display !== 'none');
+  if (ouvert('.modal-overlay.open, .stage-overlay.open, #pdf-overlay, #update-screen.show, #tuto-intro.show, #coach.show')) return false;
+  const a = document.activeElement;
+  if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
+  return true;
+}
+function tenterRechargementAuto() {
+  if (!miseAJourEnAttente || !appAuCalme()) return;
+  // Un seul essai par version : si le serveur renvoyait encore l'ancienne page, on n'entre pas dans une boucle
+  const cle = 'cap_auto_reload_' + miseAJourEnAttente;
+  try {
+    if (sessionStorage.getItem(cle)) { miseAJourEnAttente = null; return; }
+    sessionStorage.setItem(cle, String(Date.now()));
+  } catch(e) {}
+  location.replace(location.pathname + '?maj=' + Date.now());
+}
+setInterval(tenterRechargementAuto, 5000);
 
 function showUpdateScreen() {
   updateScreenShown = true;
