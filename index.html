@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.17-1">
+<meta name="app-version" content="2026.11.17-2">
 <meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -1572,6 +1572,10 @@ tr:last-child td { border-bottom: none; }
   display: flex; align-items: center; justify-content: space-between; min-height: 44px;
   font-family: 'Public Sans', sans-serif; font-size: 14px; color: var(--m-ink);
 }
+.mprofil-subs { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.25s var(--m-ease); }
+.mprofil-subs.open { grid-template-rows: 1fr; }
+.mprofil-subs-inner { overflow: hidden; min-height: 0; }
+@media (prefers-reduced-motion: reduce) { .mprofil-subs { transition: none; } }
 .mprofil-toggle-sub { padding-left: 18px; color: var(--m-ink-soft); font-size: 13px; }
 .mprofil-switch { position: relative; display: inline-block; width: 44px; height: 26px; flex-shrink: 0; }
 .mprofil-switch input { opacity: 0; width: 44px; height: 26px; margin: 0; cursor: pointer; position: absolute; z-index: 1; }
@@ -2031,6 +2035,7 @@ tr:last-child td { border-bottom: none; }
           <span class="mprofil-switch-track"></span>
         </label>
       </div>
+      <div class="mprofil-subs" id="mprofil-notif-subs"><div class="mprofil-subs-inner">
       <div class="mprofil-toggle-row mprofil-toggle-sub">
         <span>Relances</span>
         <label class="mprofil-switch">
@@ -2045,6 +2050,14 @@ tr:last-child td { border-bottom: none; }
           <span class="mprofil-switch-track"></span>
         </label>
       </div>
+      <div class="mprofil-toggle-row mprofil-toggle-sub">
+        <span>Rapport de stage</span>
+        <label class="mprofil-switch">
+          <input type="checkbox" id="mprofil-notif-rapport" onchange="saveMobileNotifPrefs()">
+          <span class="mprofil-switch-track"></span>
+        </label>
+      </div>
+      </div></div>
     </div>
   </div>
 </div>
@@ -2851,7 +2864,8 @@ async function togglePushSubscription() {
         code: currentUser,
         subscription: JSON.stringify(sub),
         relances: String(getNotifPrefs().relances),
-        places: String(getNotifPrefs().places)
+        places: String(getNotifPrefs().places),
+        rapport: String(getNotifPrefs().rapport)
       })
     });
   } catch (err) {
@@ -3372,23 +3386,28 @@ function renderProfilMobile() {
 }
 
 // ── PRÉFÉRENCES NOTIFICATIONS (mobile) ───────────────────────────────────────
+// Les trois réglages (relances, nouvelles places, rapport de stage) n'apparaissent que si les notifications sont activées
 function setNotifSubTogglesDisabled(disabled) {
-  const relEl = document.getElementById('mprofil-notif-relances');
-  const placesEl = document.getElementById('mprofil-notif-places');
-  if (relEl) relEl.disabled = disabled;
-  if (placesEl) placesEl.disabled = disabled;
+  const subs = document.getElementById('mprofil-notif-subs');
+  if (subs) {
+    subs.classList.toggle('open', !disabled);
+    subs.setAttribute('aria-hidden', disabled ? 'true' : 'false');
+    if ('inert' in subs) subs.inert = !!disabled;
+  }
 }
 
 function loadMobileNotifPrefs() {
-  let prefs = { relances: true, places: true };
+  let prefs = { relances: true, places: true, rapport: true };
   try {
     const raw = localStorage.getItem('cap_notif_prefs');
     if (raw) prefs = Object.assign(prefs, JSON.parse(raw));
   } catch (e) {}
   const relEl = document.getElementById('mprofil-notif-relances');
   const placesEl = document.getElementById('mprofil-notif-places');
+  const rapEl = document.getElementById('mprofil-notif-rapport');
   if (relEl) relEl.checked = prefs.relances;
   if (placesEl) placesEl.checked = prefs.places;
+  if (rapEl) rapEl.checked = prefs.rapport;
   const mainEl = document.getElementById('mprofil-notif-main');
   setNotifSubTogglesDisabled(!(mainEl && mainEl.checked));
 }
@@ -3396,7 +3415,7 @@ function loadMobileNotifPrefs() {
 // Préférences de notification de cet appareil (relances / nouvelles places).
 // Valeurs par défaut : tout activé.
 function getNotifPrefs() {
-  let prefs = { relances: true, places: true };
+  let prefs = { relances: true, places: true, rapport: true };
   try {
     const raw = localStorage.getItem('cap_notif_prefs');
     if (raw) prefs = Object.assign(prefs, JSON.parse(raw));
@@ -3419,7 +3438,8 @@ async function syncPushPrefsToServer(prefs) {
         code: currentUser,
         endpoint: sub.endpoint,
         relances: String(prefs.relances),
-        places: String(prefs.places)
+        places: String(prefs.places),
+        rapport: String(prefs.rapport)
       })
     });
     let ok = true;
@@ -3431,7 +3451,8 @@ async function syncPushPrefsToServer(prefs) {
           code: currentUser,
           subscription: JSON.stringify(sub),
           relances: String(prefs.relances),
-          places: String(prefs.places)
+          places: String(prefs.places),
+          rapport: String(prefs.rapport)
         })
       });
     }
@@ -3441,12 +3462,19 @@ async function syncPushPrefsToServer(prefs) {
 function saveMobileNotifPrefs() {
   const relEl = document.getElementById('mprofil-notif-relances');
   const placesEl = document.getElementById('mprofil-notif-places');
-  const prefs = { relances: relEl ? relEl.checked : true, places: placesEl ? placesEl.checked : true };
+  const rapEl = document.getElementById('mprofil-notif-rapport');
+  const prefs = { relances: relEl ? relEl.checked : true, places: placesEl ? placesEl.checked : true, rapport: rapEl ? rapEl.checked : true };
   try { localStorage.setItem('cap_notif_prefs', JSON.stringify(prefs)); } catch (e) {}
   syncPushPrefsToServer(prefs);
 }
 
 async function toggleMainNotifMobile() {
+  const mainOn = document.getElementById('mprofil-notif-main');
+  // À l'activation, les trois réglages repartent tous activés
+  if (mainOn && mainOn.checked) {
+    try { localStorage.setItem('cap_notif_prefs', JSON.stringify({ relances: true, places: true, rapport: true })); } catch (e) {}
+    loadMobileNotifPrefs();
+  }
   await togglePushSubscription();
   await updatePushButtonState();
   const mainEl = document.getElementById('mprofil-notif-main');
