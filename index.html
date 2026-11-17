@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.17-2">
-<meta name="app-update-level" content="major">
+<meta name="app-version" content="2026.11.17-3">
+<meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2025,6 +2025,7 @@ tr:last-child td { border-bottom: none; }
 
     <div class="mprofil-section">
       <button class="mprofil-tuto-btn" onclick="tutoRestart()">Revoir le tutoriel</button>
+      <div id="mprofil-version" style="margin-top:14px;font-size:11px;color:var(--m-ink-soft);text-align:center"></div>
     </div>
 
     <div class="mprofil-section">
@@ -3383,6 +3384,8 @@ function renderProfilMobile() {
 
   loadMobileNotifPrefs();
   updatePushButtonState();
+  const verEl = document.getElementById('mprofil-version');
+  if (verEl) verEl.textContent = libelleVersion();
 }
 
 // ── PRÉFÉRENCES NOTIFICATIONS (mobile) ───────────────────────────────────────
@@ -6469,29 +6472,63 @@ initPlaneScene({
 // Une app installée reste en mémoire : sans fermeture complète, elle ne recharge jamais.
 // On compare donc sa version (meta app-version) à celle du serveur, au lancement et au retour au premier plan.
 // Le niveau « major » (meta app-update-level du serveur) affiche l'écran de mise à jour ; « minor » ne fait rien.
+// La version et le résultat de la dernière vérification sont visibles en bas du profil (aide au diagnostic).
 const APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || '';
 let lastVersionCheck = 0;
 let updateScreenShown = false;
 
+// Lit le début du fichier publié sans le télécharger en entier (les balises meta sont dans le head)
+async function lireEnteteServeur() {
+  const ctrl = new AbortController();
+  const res = await fetch('./index.html?vcheck=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
+  if (!res.ok) throw new Error('http ' + res.status);
+  let txt = '';
+  if (res.body && res.body.getReader) {
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    while (txt.length < 16384 && !/app-update-level" content="[^"]+"/.test(txt)) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      txt += dec.decode(value, { stream: true });
+    }
+    ctrl.abort();
+  } else {
+    txt = (await res.text()).slice(0, 16384);
+  }
+  return txt;
+}
+
+function noterVerification(info) {
+  try { sessionStorage.setItem('cap_version_check', JSON.stringify(info)); } catch(e) {}
+  const el = document.getElementById('mprofil-version');
+  if (el) el.textContent = libelleVersion();
+}
+function libelleVersion() {
+  let txt = 'Version ' + (APP_VERSION || '?');
+  try {
+    const i = JSON.parse(sessionStorage.getItem('cap_version_check') || 'null');
+    if (i) txt += ' · vérifiée à ' + i.heure + (i.erreur ? ' (échec)' : ' (serveur : ' + i.serveur + ', ' + i.niveau + ')');
+  } catch(e) {}
+  return txt;
+}
+
 async function checkAppVersion(force) {
   if (updateScreenShown || !APP_VERSION || navigator.onLine === false) return;
   const now = Date.now();
-  if (!force && now - lastVersionCheck < 60000) return;
+  if (!force && now - lastVersionCheck < 20000) return;
   lastVersionCheck = now;
+  const heure = new Date().toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   try {
-    // Seul le début du fichier est utile (les balises meta sont dans le head)
-    const res = await fetch('./index.html?vcheck=' + now, { cache: 'no-store', headers: { Range: 'bytes=0-4095' } });
-    if (!res.ok) return;
-    const head = await res.text();
+    const head = await lireEnteteServeur();
     const remoteVersion = (head.match(/<meta name="app-version" content="([^"]+)"/) || [])[1];
     const level = (head.match(/<meta name="app-update-level" content="([^"]+)"/) || [])[1] || 'minor';
-    if (!remoteVersion) return;
+    if (!remoteVersion) { noterVerification({ heure, erreur: true }); return; }
+    noterVerification({ heure, serveur: remoteVersion, niveau: level });
     if (remoteVersion === APP_VERSION) {
       try { sessionStorage.removeItem('cap_update_tries'); } catch(e) {}
       return;
     }
     if (level === 'major') showUpdateScreen();
-  } catch(e) { /* silencieux : la vérification n'est jamais bloquante */ }
+  } catch(e) { noterVerification({ heure, erreur: true }); /* silencieux : la vérification n'est jamais bloquante */ }
 }
 
 function showUpdateScreen() {
@@ -6530,6 +6567,9 @@ window.addEventListener('load', () => checkAppVersion(true));
 window.addEventListener('pageshow', (e) => { if (e.persisted) checkAppVersion(true); });
 window.addEventListener('online', () => checkAppVersion());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkAppVersion(); });
+window.addEventListener('focus', () => checkAppVersion());
+// Une app laissée ouverte au premier plan : vérification régulière (toutes les 2 minutes)
+setInterval(() => { if (!document.hidden) checkAppVersion(); }, 120000);
 
 
 // ── TUTORIEL ─────────────────────────────────────────────────────────────────
