@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.17-4">
-<meta name="app-update-level" content="major">
+<meta name="app-version" content="2026.11.17-5">
+<meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -6548,19 +6548,23 @@ async function applyAppUpdate() {
     const tries = (parseInt(sessionStorage.getItem('cap_update_tries') || '0', 10) || 0) + 1;
     sessionStorage.setItem('cap_update_tries', String(tries));
   } catch(e) {}
+  // Adresse différente à chaque fois : contourne tout cache résiduel. La session (sessionStorage) est conservée.
+  let relance = false;
+  const recharger = () => { if (relance) return; relance = true; location.replace(location.pathname + '?maj=' + Date.now()); };
+  // Filet de sécurité : quoi qu'il arrive, la page se recharge au bout de 2,5 secondes au plus
+  setTimeout(recharger, 2500);
   try {
-    // On ne désinscrit jamais le service worker : cela supprimerait l'abonnement aux notifications
+    // On ne désinscrit jamais le service worker : cela supprimerait l'abonnement aux notifications.
+    // Ces opérations ne bloquent jamais le rechargement (la page est de toute façon demandée au réseau en priorité).
     if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.update().catch(() => {})));
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => { try { r.update().catch(() => {}); } catch(e) {} })).catch(() => {});
     }
     if (window.caches) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).catch(() => {});
     }
   } catch(e) {}
-  // Adresse différente à chaque fois : contourne tout cache résiduel. La session (sessionStorage) est conservée.
-  location.replace(location.pathname + '?maj=' + Date.now());
+  // Un court délai laisse partir ces demandes, puis on recharge sans attendre leur fin
+  setTimeout(recharger, 300);
 }
 
 window.addEventListener('load', () => checkAppVersion(true));
