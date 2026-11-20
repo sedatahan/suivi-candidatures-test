@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.20-4">
+<meta name="app-version" content="2026.11.20-5">
 <meta name="app-update-level" content="major">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -816,6 +816,11 @@ body {
 .rec-ent-corps { padding:0 16px 14px; }
 .rec-metiers { margin:0 0 12px; padding-left:18px; font-size:15px; color:var(--text); line-height:1.6; }
 .rec-note-ent { margin:0 -16px 10px; }
+.rec-rend { display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin:0 0 10px; }
+.rec-rend-btn { border:1.5px solid var(--accent); background:none; color:var(--accent); border-radius:20px; padding:0 16px; min-height:44px; font:inherit; font-size:15px; font-weight:600; cursor:pointer; }
+.rec-rend-btn.on { background:var(--accent); color:#fff; }
+.rec-recruteur-label { font-size:13px; color:var(--text2); margin-top:4px; }
+.rec-recruteur { width:100%; box-sizing:border-box; min-height:44px; padding:0 12px; border:1.5px solid var(--border); border-radius:10px; background:var(--surface, #fff); color:var(--text); font:inherit; font-size:16px; }
 .rec-metier { padding:10px 0; border-top:1px solid var(--border); }
 .rec-metier:first-of-type { border-top:0; }
 .rec-metier.fav .rec-metier-nom { font-weight:600; }
@@ -4926,13 +4931,13 @@ function recJours(iso) {
   const n = new Date(); n.setHours(12, 0, 0, 0);
   return Math.round((d - n) / 86400000);
 }
-function recCompte(j) { return j <= 0 ? "Aujourd'hui" : j === 1 ? 'Demain' : 'Dans ' + j + ' jours'; }
+function recCompte(j) { return j < 0 ? 'Terminé' : j === 0 ? "Aujourd'hui" : j === 1 ? 'Demain' : 'Dans ' + j + ' jours'; }
 function recHeure(h) { if (!h) return ''; const p = String(h).split(':'); return parseInt(p[0], 10) + 'h' + (p[1] && p[1] !== '00' ? p[1] : ''); }
 
 async function loadRecrutements() {
   if (currentRole !== 'youth' || !document.getElementById('recrutements-zone')) return;
   try {
-    const res = await fetch(gsUrl('get_recrutements', '&favoris=' + encodeURIComponent(youthFavoris.join('|'))));
+    const res = await fetch(gsUrl('get_recrutements', '&code=' + encodeURIComponent(currentUser || '') + '&favoris=' + encodeURIComponent(youthFavoris.join('|'))));
     const data = await res.json();
     recrutementsData = Array.isArray(data) ? data : [];
   } catch(e) { recrutementsData = []; }
@@ -4947,7 +4952,7 @@ function renderRecrutements() {
   if (!recrutementsData.length) { zone.innerHTML = ''; return; }
   const aFavoris = youthFavoris.length > 0;
   const filtre = aFavoris && !recrutementsVoirTout;
-  const visibles = recrutementsData.map((ev, i) => ({ ev, i })).filter(x => !filtre || x.ev.correspond);
+  const visibles = recrutementsData.map((ev, i) => ({ ev, i })).filter(x => !filtre || x.ev.correspond || x.ev.rend);
   const autres = recrutementsData.some(ev => !ev.correspond);
   const bouton = aFavoris && autres
     ? '<button class="rec-voir-tout" onclick="toggleRecrutementsVoirTout()">' + (recrutementsVoirTout ? 'Seulement mes projets' : 'Voir tout') + '</button>' : '';
@@ -4978,13 +4983,14 @@ function renderRecrutementCard(ev, ei) {
 
 function renderRecrutementEntreprise(e, ei, ci) {
   const aProjet = e.metiers.some(m => m.favori);
-  return '<details class="rec-ent"><summary>'
+  return '<details class="rec-ent" data-k="' + ei + '-' + ci + '"><summary>'
     + '<span class="rec-ent-nom">' + recEsc(e.nom)
     + (aProjet ? '<span class="rec-etoile" title="Correspond à vos projets" aria-label="Correspond à vos projets">★</span>' : '')
     + (e.nouvelle ? '<span class="rec-tag">Nouvelle</span>' : '') + '</span>'
     + (e.commentaire ? '<div class="rec-prec">' + recEsc(e.commentaire) + '</div>' : '')
     + '</summary><div class="rec-ent-corps">'
     + (e.note ? '<div class="rec-note rec-note-ent">' + recEsc(e.note) + '</div>' : '')
+    + renderRecrutementRend(e, ei, ci)
     + e.metiers.map((m, mi) => ({ m, mi })).sort((a, b) => (b.m.favori ? 1 : 0) - (a.m.favori ? 1 : 0)).map(({ m, mi }) =>
         '<div class="rec-metier' + (m.favori ? ' fav' : '') + '">'
         + '<div class="rec-metier-nom">' + (m.favori ? '<span class="rec-etoile" aria-label="Votre projet">★</span> ' : '')
@@ -4993,6 +4999,72 @@ function renderRecrutementEntreprise(e, ei, ci) {
         + '<div id="rec-lettre-' + ei + '-' + ci + '-' + mi + '"></div>'
         + '</div>').join('')
     + '</div></details>';
+}
+
+// « Je m'y rends » : le jeune signale qu'il rencontrera cette entreprise. Après l'événement, il peut
+// indiquer le nom du recruteur et ouvrir un brouillon de mail de remerciement (jamais envoyé automatiquement).
+function renderRecrutementRend(e, ei, ci) {
+  const ev = recrutementsData[ei];
+  let html = '<div class="rec-rend">'
+    + '<button type="button" class="rec-rend-btn' + (e.rend ? ' on' : '') + '" aria-pressed="' + (e.rend ? 'true' : 'false') + '" onclick="toggleRecrutementRend(' + ei + ',' + ci + ')">'
+    + (e.rend ? '✓ Je m\'y rends' : 'Je m\'y rends') + '</button>';
+  if (e.rend && recJours(ev.date) <= 0) {
+    html += '<label class="rec-recruteur-label" for="rec-recruteur-' + ei + '-' + ci + '">Nom de la personne rencontrée (facultatif)</label>'
+      + '<input type="text" id="rec-recruteur-' + ei + '-' + ci + '" class="rec-recruteur" maxlength="60" placeholder="Par exemple : Madame Dupont" autocomplete="off" value="' + recEsc(e.recruteur || '') + '" onchange="saveRecrutementRecruteur(' + ei + ',' + ci + ', this.value)">'
+      + '<button type="button" class="alerte-btn-lettre" onclick="ouvrirMailRemerciement(' + ei + ',' + ci + ')">✉ Écrire un mail de remerciement</button>';
+  }
+  return html + '</div>';
+}
+
+async function envoyerRecrutementJeune(ev, ent, rend, recruteur) {
+  const params = '&code=' + encodeURIComponent(currentUser) + '&cle=' + encodeURIComponent(ev.cle)
+    + '&entreprise=' + encodeURIComponent(ent.nom) + '&rend=' + (rend ? 'true' : 'false')
+    + (recruteur !== undefined ? '&recruteur=' + encodeURIComponent(recruteur) : '');
+  const res = await fetch(gsUrl('save_recrutement_jeune', params));
+  const json = await res.json();
+  if (!json || json.success === false) throw new Error((json && json.error) || 'Enregistrement impossible');
+}
+
+async function toggleRecrutementRend(ei, ci) {
+  const ev = recrutementsData[ei], ent = ev.entreprises[ci];
+  const avant = ent.rend;
+  ent.rend = !avant;
+  if (!ent.rend) ent.recruteur = '';
+  ev.rend = ev.entreprises.some(x => x.rend);
+  const ouverts = Array.from(document.querySelectorAll('.rec-ent[open]')).map(d => d.dataset.k);
+  renderRecrutements();
+  document.querySelectorAll('.rec-ent').forEach(d => { if (ouverts.indexOf(d.dataset.k) > -1) d.open = true; });
+  try { await envoyerRecrutementJeune(ev, ent, ent.rend); }
+  catch (err) {
+    ent.rend = avant; ev.rend = ev.entreprises.some(x => x.rend);
+    renderRecrutements();
+    showError('Impossible d\'enregistrer votre choix. Vérifiez votre connexion et réessayez.');
+  }
+}
+
+async function saveRecrutementRecruteur(ei, ci, valeur) {
+  const ev = recrutementsData[ei], ent = ev.entreprises[ci];
+  ent.recruteur = String(valeur || '').trim();
+  try { await envoyerRecrutementJeune(ev, ent, true, ent.recruteur); } catch (err) { /* le nom reste saisi sur l'écran */ }
+}
+
+// Brouillon de mail (modèle « Recrutement en direct : comment se préparer ? »). Le jeune relit et envoie lui-même.
+function ouvrirMailRemerciement(ei, ci) {
+  const ev = recrutementsData[ei], ent = ev.entreprises[ci];
+  const champ = document.getElementById('rec-recruteur-' + ei + '-' + ci);
+  const recruteur = (champ ? champ.value : ent.recruteur || '').trim();
+  const m = ent.metiers.find(x => x.favori) || ent.metiers[0];
+  const metier = String(m ? m.metier : '').replace(/\s+(CFC|AFP)\s*$/i, '').trim();
+  const metierBas = metier ? metier.charAt(0).toLowerCase() + metier.slice(1) : 'votre domaine';
+  const de = /^[aeiouyéèêàâîôûh]/i.test(metierBas) ? 'd\'' : 'de ';
+  const dateTxt = new Date(String(ev.date).slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
+  const nom = (document.getElementById('youth-header-code') || {}).textContent || '';
+  const objet = 'Merci pour notre échange – Candidature pour un apprentissage ' + de + metierBas;
+  const corps = 'Bonjour ' + (recruteur || 'Madame, Monsieur') + ',\n\n'
+    + 'Je vous remercie pour le temps que vous m\'avez accordé lors du recrutement en direct du ' + dateTxt + ' et pour les informations partagées au sujet du métier ' + de + metierBas + '.\n\n'
+    + 'Notre échange a renforcé mon intérêt pour cette profession et pour ' + ent.nom + '. Je reste à votre disposition pour toute information complémentaire.\n\n'
+    + 'Avec mes meilleures salutations,\n\n' + nom.trim();
+  window.location.href = 'mailto:?subject=' + encodeURIComponent(objet) + '&body=' + encodeURIComponent(corps);
 }
 
 // Une bulle par métier : chaque lettre vise une place précise de l'entreprise.
