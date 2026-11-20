@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.20-6">
-<meta name="app-update-level" content="minor">
+<meta name="app-version" content="2026.11.20-7">
+<meta name="app-update-level" content="major">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2096,6 +2096,13 @@ tr:last-child td { border-bottom: none; }
           <span class="mprofil-switch-track"></span>
         </label>
       </div>
+      <div class="mprofil-toggle-row mprofil-toggle-sub">
+        <span>Recrutements en direct</span>
+        <label class="mprofil-switch">
+          <input type="checkbox" id="mprofil-notif-recrutements" onchange="saveMobileNotifPrefs()">
+          <span class="mprofil-switch-track"></span>
+        </label>
+      </div>
       </div></div>
     </div>
 
@@ -2919,7 +2926,8 @@ async function togglePushSubscription() {
         subscription: JSON.stringify(sub),
         relances: String(getNotifPrefs().relances),
         places: String(getNotifPrefs().places),
-        rapport: String(getNotifPrefs().rapport)
+        rapport: String(getNotifPrefs().rapport),
+        recrutements: String(getNotifPrefs().recrutements)
       })
     });
   } catch (err) {
@@ -3456,7 +3464,7 @@ function setNotifSubTogglesDisabled(disabled) {
 }
 
 function loadMobileNotifPrefs() {
-  let prefs = { relances: true, places: true, rapport: true };
+  let prefs = { relances: true, places: true, rapport: true, recrutements: true };
   try {
     const raw = localStorage.getItem('cap_notif_prefs');
     if (raw) prefs = Object.assign(prefs, JSON.parse(raw));
@@ -3467,6 +3475,8 @@ function loadMobileNotifPrefs() {
   if (relEl) relEl.checked = prefs.relances;
   if (placesEl) placesEl.checked = prefs.places;
   if (rapEl) rapEl.checked = prefs.rapport;
+  const recEl = document.getElementById('mprofil-notif-recrutements');
+  if (recEl) recEl.checked = prefs.recrutements;
   const mainEl = document.getElementById('mprofil-notif-main');
   setNotifSubTogglesDisabled(!(mainEl && mainEl.checked));
 }
@@ -3474,7 +3484,7 @@ function loadMobileNotifPrefs() {
 // Préférences de notification de cet appareil (relances / nouvelles places).
 // Valeurs par défaut : tout activé.
 function getNotifPrefs() {
-  let prefs = { relances: true, places: true, rapport: true };
+  let prefs = { relances: true, places: true, rapport: true, recrutements: true };
   try {
     const raw = localStorage.getItem('cap_notif_prefs');
     if (raw) prefs = Object.assign(prefs, JSON.parse(raw));
@@ -3498,7 +3508,8 @@ async function syncPushPrefsToServer(prefs) {
         endpoint: sub.endpoint,
         relances: String(prefs.relances),
         places: String(prefs.places),
-        rapport: String(prefs.rapport)
+        rapport: String(prefs.rapport),
+        recrutements: String(prefs.recrutements)
       })
     });
     let ok = true;
@@ -3511,7 +3522,8 @@ async function syncPushPrefsToServer(prefs) {
           subscription: JSON.stringify(sub),
           relances: String(prefs.relances),
           places: String(prefs.places),
-          rapport: String(prefs.rapport)
+          rapport: String(prefs.rapport),
+          recrutements: String(prefs.recrutements)
         })
       });
     }
@@ -3522,7 +3534,8 @@ function saveMobileNotifPrefs() {
   const relEl = document.getElementById('mprofil-notif-relances');
   const placesEl = document.getElementById('mprofil-notif-places');
   const rapEl = document.getElementById('mprofil-notif-rapport');
-  const prefs = { relances: relEl ? relEl.checked : true, places: placesEl ? placesEl.checked : true, rapport: rapEl ? rapEl.checked : true };
+  const recEl = document.getElementById('mprofil-notif-recrutements');
+  const prefs = { relances: relEl ? relEl.checked : true, places: placesEl ? placesEl.checked : true, rapport: rapEl ? rapEl.checked : true, recrutements: recEl ? recEl.checked : true };
   try { localStorage.setItem('cap_notif_prefs', JSON.stringify(prefs)); } catch (e) {}
   syncPushPrefsToServer(prefs);
 }
@@ -3531,7 +3544,7 @@ async function toggleMainNotifMobile() {
   const mainOn = document.getElementById('mprofil-notif-main');
   // À l'activation, les trois réglages repartent tous activés
   if (mainOn && mainOn.checked) {
-    try { localStorage.setItem('cap_notif_prefs', JSON.stringify({ relances: true, places: true, rapport: true })); } catch (e) {}
+    try { localStorage.setItem('cap_notif_prefs', JSON.stringify({ relances: true, places: true, rapport: true, recrutements: true })); } catch (e) {}
     loadMobileNotifPrefs();
   }
   await togglePushSubscription();
