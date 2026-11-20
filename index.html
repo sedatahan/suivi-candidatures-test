@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.20-2">
+<meta name="app-version" content="2026.11.20-3">
 <meta name="app-update-level" content="major">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -815,6 +815,11 @@ body {
 .rec-prec { margin-top:4px; font-size:14px; color:var(--text2); }
 .rec-ent-corps { padding:0 16px 14px; }
 .rec-metiers { margin:0 0 12px; padding-left:18px; font-size:15px; color:var(--text); line-height:1.6; }
+.rec-note-ent { margin:0 -16px 10px; }
+.rec-metier { padding:10px 0; border-top:1px solid var(--border); }
+.rec-metier:first-of-type { border-top:0; }
+.rec-metier.fav .rec-metier-nom { color:var(--accent); font-weight:600; }
+.rec-metier-nom { font-size:15px; line-height:1.4; margin-bottom:8px; }
 .rec-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
 .rec-chip { border:1.5px solid var(--border); background:none; border-radius:20px; padding:0 12px; min-height:44px; font:inherit; font-size:14px; color:var(--text); cursor:pointer; text-align:left; }
 .rec-chip.on { border-color:var(--accent); color:var(--accent); font-weight:600; }
@@ -4969,49 +4974,41 @@ function renderRecrutementCard(ev, ei) {
 }
 
 function renderRecrutementEntreprise(e, ei, ci) {
+  const projets = Array.from(new Set(e.metiers.map(m => m.projet).filter(Boolean)));
   return '<details class="rec-ent"><summary>'
     + '<span class="rec-ent-nom">' + recEsc(e.nom)
-    + (e.correspond ? '<span class="rec-tag">Votre projet</span>' : '')
+    + projets.map(p => '<span class="rec-tag">' + recEsc(p) + '</span>').join('')
     + (e.nouvelle ? '<span class="rec-tag">Nouvelle</span>' : '') + '</span>'
     + (e.commentaire ? '<div class="rec-prec">' + recEsc(e.commentaire) + '</div>' : '')
     + '</summary><div class="rec-ent-corps">'
-    + '<ul class="rec-metiers">' + e.metiers.map(m => '<li>' + recEsc(m.metier) + (m.favori ? ' <span class="rec-tag">Votre projet</span>' : '') + '</li>').join('') + '</ul>'
-    + '<button class="alerte-btn-lettre" onclick="preparerLettreRecrutement(this,' + ei + ',' + ci + ')">✉ Préparer ma lettre</button>'
-    + '<div id="rec-lettre-' + ei + '-' + ci + '"></div>'
+    + (e.note ? '<div class="rec-note rec-note-ent">' + recEsc(e.note) + '</div>' : '')
+    + e.metiers.map((m, mi) =>
+        '<div class="rec-metier' + (m.favori ? ' fav' : '') + '">'
+        + '<div class="rec-metier-nom">' + recEsc(m.metier) + '</div>'
+        + '<button class="alerte-btn-lettre" onclick="preparerLettreRecrutement(this,' + ei + ',' + ci + ',' + mi + ')">✉ Préparer ma lettre</button>'
+        + '<div id="rec-lettre-' + ei + '-' + ci + '-' + mi + '"></div>'
+        + '</div>').join('')
     + '</div></details>';
 }
 
-// Une bulle par entreprise ; si l'entreprise propose plusieurs métiers, le jeune choisit celui de sa lettre.
-async function preparerLettreRecrutement(btn, ei, ci) {
+// Une bulle par métier : chaque lettre vise une place précise de l'entreprise.
+async function preparerLettreRecrutement(btn, ei, ci, mi) {
   const ent = recrutementsData[ei].entreprises[ci];
-  const zone = document.getElementById('rec-lettre-' + ei + '-' + ci);
+  const zone = document.getElementById('rec-lettre-' + ei + '-' + ci + '-' + mi);
   if (zone.innerHTML.trim()) { zone.innerHTML = ''; btn.textContent = '✉ Préparer ma lettre'; return; }
-  let mi = ent.metiers.findIndex(m => m.favori);
-  if (mi < 0) mi = 0;
-  btn.textContent = '✕ Fermer';
-  await lettreRecrutementPour(ei, ci, mi);
-}
-
-async function lettreRecrutementPour(ei, ci, mi) {
-  const ent = recrutementsData[ei].entreprises[ci];
-  const zone = document.getElementById('rec-lettre-' + ei + '-' + ci);
   const metier = ent.metiers[mi].metier;
-  const chips = ent.metiers.length > 1
-    ? '<div class="rec-chips">' + ent.metiers.map((m, k) => '<button class="rec-chip' + (k === mi ? ' on' : '') + '" onclick="lettreRecrutementPour(' + ei + ',' + ci + ',' + k + ')">' + recEsc(m.metier) + '</button>').join('') + '</div>'
-    : '';
-  zone.innerHTML = chips + '<div class="rec-bulle"></div>';
-  const bulle = zone.querySelector('.rec-bulle');
+  btn.textContent = '✕ Fermer';
+  zone.innerHTML = '<div class="lettre-bulle"><div class="lettre-loading">✨ Génération en cours...</div></div>';
   const cle = ent.nom + '||' + metier;
   try {
     let points = lettreRecCache[cle];
     if (!points) {
-      bulle.innerHTML = '<div class="lettre-bulle"><div class="lettre-loading">✨ Génération en cours...</div></div>';
       points = await genererPointsLettre(metier, ent.nom, '');     // cache commun côté serveur (entreprise + métier)
       lettreRecCache[cle] = points;
     }
-    afficherBulleLettre(bulle, recEsc(metier), recEsc(ent.nom), points);
+    afficherBulleLettre(zone, recEsc(metier), recEsc(ent.nom), points);
   } catch(e) {
-    bulle.innerHTML = '<div class="lettre-bulle"><div class="lettre-error">' + formatErreurLettre(e.message) + '</div></div>';
+    zone.innerHTML = '<div class="lettre-bulle"><div class="lettre-error">' + formatErreurLettre(e.message) + '</div></div>';
   }
 }
 
