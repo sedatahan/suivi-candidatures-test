@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.20-3">
-<meta name="app-update-level" content="minor">
+<meta name="app-version" content="2026.11.20-4">
+<meta name="app-update-level" content="major">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -818,7 +818,10 @@ body {
 .rec-note-ent { margin:0 -16px 10px; }
 .rec-metier { padding:10px 0; border-top:1px solid var(--border); }
 .rec-metier:first-of-type { border-top:0; }
-.rec-metier.fav .rec-metier-nom { color:var(--accent); font-weight:600; }
+.rec-metier.fav .rec-metier-nom { font-weight:600; }
+.rec-metier-nom a { color:inherit; text-decoration:underline; text-underline-offset:3px; }
+.rec-etoile { color:var(--accent); margin-left:6px; font-size:15px; vertical-align:middle; }
+.rec-metier-nom .rec-etoile { margin-left:0; }
 .rec-metier-nom { font-size:15px; line-height:1.4; margin-bottom:8px; }
 .rec-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
 .rec-chip { border:1.5px solid var(--border); background:none; border-radius:20px; padding:0 12px; min-height:44px; font:inherit; font-size:14px; color:var(--text); cursor:pointer; text-align:left; }
@@ -4974,17 +4977,18 @@ function renderRecrutementCard(ev, ei) {
 }
 
 function renderRecrutementEntreprise(e, ei, ci) {
-  const projets = Array.from(new Set(e.metiers.map(m => m.projet).filter(Boolean)));
+  const aProjet = e.metiers.some(m => m.favori);
   return '<details class="rec-ent"><summary>'
     + '<span class="rec-ent-nom">' + recEsc(e.nom)
-    + projets.map(p => '<span class="rec-tag">' + recEsc(p) + '</span>').join('')
+    + (aProjet ? '<span class="rec-etoile" title="Correspond à vos projets" aria-label="Correspond à vos projets">★</span>' : '')
     + (e.nouvelle ? '<span class="rec-tag">Nouvelle</span>' : '') + '</span>'
     + (e.commentaire ? '<div class="rec-prec">' + recEsc(e.commentaire) + '</div>' : '')
     + '</summary><div class="rec-ent-corps">'
     + (e.note ? '<div class="rec-note rec-note-ent">' + recEsc(e.note) + '</div>' : '')
-    + e.metiers.map((m, mi) =>
+    + e.metiers.map((m, mi) => ({ m, mi })).sort((a, b) => (b.m.favori ? 1 : 0) - (a.m.favori ? 1 : 0)).map(({ m, mi }) =>
         '<div class="rec-metier' + (m.favori ? ' fav' : '') + '">'
-        + '<div class="rec-metier-nom">' + recEsc(m.metier) + '</div>'
+        + '<div class="rec-metier-nom">' + (m.favori ? '<span class="rec-etoile" aria-label="Votre projet">★</span> ' : '')
+        + '<a href="' + recEsc(orientationUrl(m.metier)) + '" target="_blank" rel="noopener" title="Voir la fiche métier sur orientation.ch">' + recEsc(m.metier) + '</a></div>'
         + '<button class="alerte-btn-lettre" onclick="preparerLettreRecrutement(this,' + ei + ',' + ci + ',' + mi + ')">✉ Préparer ma lettre</button>'
         + '<div id="rec-lettre-' + ei + '-' + ci + '-' + mi + '"></div>'
         + '</div>').join('')
