@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.17-9">
-<meta name="app-update-level" content="minor">
+<meta name="app-version" content="2026.11.20-2">
+<meta name="app-update-level" content="major">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -792,6 +792,35 @@ body {
   color: var(--text); cursor: pointer; font-family: 'DM Sans', sans-serif;
 }
 .alertes-body { padding: 20px 16px 40px; max-width: 600px; margin: 0 auto; }
+/* Recrutements en direct */
+.rec-section-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.rec-section-title { font-family:'Space Grotesk','DM Sans',sans-serif; font-size:18px; font-weight:600; color:var(--text); }
+.rec-voir-tout { background:none; border:1.5px solid var(--border); border-radius:20px; padding:0 14px; min-height:44px; font:inherit; font-size:14px; color:var(--text); cursor:pointer; white-space:nowrap; }
+.rec-vide { font-size:15px; color:var(--text2); margin:0 0 12px; max-width:65ch; }
+.rec-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; }
+.rec-note { padding:10px 16px; background:var(--reportee-bg); color:var(--reportee-text); font-size:14px; line-height:1.45; }
+.rec-head { padding:16px; }
+.rec-titre { font-family:'Space Grotesk','DM Sans',sans-serif; font-size:17px; font-weight:600; color:var(--text); margin:0 0 6px; }
+.rec-meta { font-size:15px; color:var(--text2); line-height:1.5; }
+.rec-compte { display:inline-block; margin-top:10px; padding:3px 12px; border-radius:20px; background:var(--accent-light); color:var(--accent); font-size:14px; font-weight:600; }
+.rec-lien { display:inline-block; margin-top:10px; margin-left:10px; font-size:14px; color:var(--accent); }
+.rec-prec-event { margin-top:10px; font-size:14px; color:var(--text); }
+.rec-ent { border-top:1px solid var(--border); }
+.rec-ent > summary { list-style:none; cursor:pointer; padding:12px 16px; min-height:44px; display:block; }
+.rec-ent > summary::-webkit-details-marker { display:none; }
+.rec-ent-nom { font-size:16px; font-weight:600; color:var(--text); }
+.rec-ent-nom::after { content:'+'; float:right; font-weight:400; color:var(--text2); }
+.rec-ent[open] .rec-ent-nom::after { content:'\2212'; }
+.rec-tag { display:inline-block; margin-left:8px; padding:1px 8px; border-radius:10px; background:var(--accent-light); color:var(--accent); font-size:12px; font-weight:600; vertical-align:middle; }
+.rec-prec { margin-top:4px; font-size:14px; color:var(--text2); }
+.rec-ent-corps { padding:0 16px 14px; }
+.rec-metiers { margin:0 0 12px; padding-left:18px; font-size:15px; color:var(--text); line-height:1.6; }
+.rec-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.rec-chip { border:1.5px solid var(--border); background:none; border-radius:20px; padding:0 12px; min-height:44px; font:inherit; font-size:14px; color:var(--text); cursor:pointer; text-align:left; }
+.rec-chip.on { border-color:var(--accent); color:var(--accent); font-weight:600; }
+.rec-retirees { padding:10px 16px 14px; border-top:1px solid var(--border); font-size:14px; color:var(--text2); }
+@media (prefers-reduced-motion: no-preference) { .rec-ent-corps { animation: recOuvre .2s cubic-bezier(.16,1,.3,1); } }
+@keyframes recOuvre { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
 .alerte-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
@@ -1630,6 +1659,10 @@ tr:last-child td { border-bottom: none; }
 .tuto-step-num{font-family:'Space Grotesk','DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--m-accent, #3730A3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
 .tuto-title{font-family:'Space Grotesk','DM Sans',sans-serif;font-size:30px;line-height:1.15;font-weight:600;color:var(--m-ink, #2b2118);margin:0 0 14px}
 .tuto-text{font-size:17px;line-height:1.5;color:var(--m-ink, #2b2118);max-width:34ch;margin:0}
+.tuto-conseil{margin-top:22px;max-width:38ch}
+.tuto-conseil-label{font-family:'Space Grotesk','DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m-accent, #3730A3);margin-bottom:6px}
+.tuto-conseil p{margin:0;font-size:15px;line-height:1.5;color:var(--m-ink-soft, var(--text2))}
+.tuto-conseil[hidden]{display:none}
 .tuto-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:12px}
 .tuto-dots{display:flex;gap:8px}
 .tuto-dot{width:8px;height:8px;border-radius:50%;background:var(--m-border, #ddd)}
@@ -1984,6 +2017,7 @@ tr:last-child td { border-bottom: none; }
       <div style="font-size:12px;color:var(--text2)" id="alertes-sub">Annonces correspondant à vos projets</div>
     </div>
   </div>
+  <div class="alertes-body" id="recrutements-zone" style="padding-bottom:0"></div>
   <div class="alertes-body" id="alertes-body">
     <!-- Contenu généré dynamiquement -->
   </div>
@@ -2081,7 +2115,8 @@ tr:last-child td { border-bottom: none; }
     <div class="header-brand">Tableau de bord</div>
     <div class="header-user">
       <span class="header-badge" id="counselor-header-name">Conseiller</span>
-      <button class="btn-logout" onclick="refreshCounselor()" style="margin-right:6px" title="Rafraîchir">↻</button>
+      <button class="btn-logout" id="counselor-help-btn" onclick="tutoConseillerRestart()" style="margin-right:6px" title="Revoir le tutoriel" aria-label="Revoir le tutoriel">?</button>
+      <button class="btn-logout" id="counselor-refresh-btn" onclick="refreshCounselor()" style="margin-right:6px" title="Rafraîchir">↻</button>
       <button class="btn-logout" onclick="logout()">Quitter</button>
     </div>
   </div>
@@ -2366,6 +2401,10 @@ tr:last-child td { border-bottom: none; }
       <div class="tuto-step-num" id="tuto-step-num"></div>
       <h2 class="tuto-title" id="tuto-title"></h2>
       <p class="tuto-text" id="tuto-text"></p>
+      <div class="tuto-conseil" id="tuto-conseil" hidden>
+        <div class="tuto-conseil-label">Pour le présenter</div>
+        <p id="tuto-conseil-text"></p>
+      </div>
     </div>
     <div class="tuto-foot">
       <div class="tuto-dots" id="tuto-dots"></div>
@@ -2460,6 +2499,7 @@ async function restoreSession() {
       const conseiller = JSON.parse(sessionStorage.getItem('cap_conseiller'));
       if (!conseiller) return;
       currentConseiller = conseiller;
+      youthTutoRemote = conseiller.tuto || '';
       currentRole = 'counselor';
       document.getElementById('counselor-header-name').textContent = conseiller.nom;
       [allData, jeunesMap] = await Promise.all([gsRead(), gsReadJeunes()]);
@@ -3132,7 +3172,8 @@ async function loginCounselor() {
       btnC.disabled = false;
       return;
     }
-    currentConseiller = { code: json.code, nom: json.nom };
+    currentConseiller = { code: json.code, nom: json.nom, tuto: json.tuto || '' };
+    youthTutoRemote = currentConseiller.tuto;   // progression du tutoriel lue dans le Sheet
     currentRole = 'counselor';
     document.getElementById('counselor-header-name').textContent = json.nom;
     btnC.textContent = 'Chargement...';
@@ -3207,6 +3248,8 @@ function showScreen(name) {
   if (name !== 'loading') document.getElementById('login-error').style.display = 'none';
   updateMobileNav(name);
   if (typeof tutoOnScreen === 'function' && ['dashboard','youth','alertes','profil'].indexOf(name) >= 0) setTimeout(() => tutoOnScreen(name), 300);
+  if (name === 'counselor' && typeof tutoConseillerOnScreen === 'function') setTimeout(tutoConseillerOnScreen, 900);
+  if (name === 'alertes' && typeof loadRecrutements === 'function') loadRecrutements();
 }
 
 // ── NAVIGATION MOBILE (Dashboard / Mes candidatures / Annonces / Profil) ─────
@@ -3986,7 +4029,7 @@ function showDetail(code) {
 
   // Charger les favoris
   renderDetailFavoris([]);
-  fetch(gsUrl('check_code', '&code=' + encodeURIComponent(code)))
+  if (code.indexOf('DEMO-') !== 0) fetch(gsUrl('check_code', '&code=' + encodeURIComponent(code)))
     .then(r => r.json())
     .then(json => {
       const favs = json.favoris ? json.favoris.split('|').filter(Boolean) : [];
@@ -4071,7 +4114,7 @@ Ses candidatures seront déplacées dans les archives. Il ne pourra plus se conn
     await fetch(url);
     delete allData[currentDetailCode];
     delete jeunesMap[currentDetailCode];
-    const res = await fetch(gsUrl('read_archives'));
+    const res = await fetch(gsUrl('read_archives', '&conseiller=' + encodeURIComponent(currentConseiller ? currentConseiller.code : '')));
     archivesData = await res.json();
     closeDetail();
     renderCounselor();
@@ -4129,7 +4172,7 @@ async function toggleArchives() {
   }
   btn.textContent = 'Chargement...';
   try {
-    const res = await fetch(gsUrl('read_archives'));
+    const res = await fetch(gsUrl('read_archives', '&conseiller=' + encodeURIComponent(currentConseiller ? currentConseiller.code : '')));
     archivesData = await res.json();
     renderArchivesList();
     panel.style.display = '';
@@ -4203,7 +4246,7 @@ async function desarchiveJeune() {
 
   try {
     await fetch(gsUrl('desarchive_jeune', '&code=' + encodeURIComponent(currentArchiveCode)));
-    const res = await fetch(gsUrl('read_archives'));
+    const res = await fetch(gsUrl('read_archives', '&conseiller=' + encodeURIComponent(currentConseiller ? currentConseiller.code : '')));
     archivesData = await res.json();
     allData = await gsRead();
     jeunesMap = await gsReadJeunes();
@@ -4239,7 +4282,7 @@ async function deleteJeunePermanently() {
 
   try {
     await fetch(gsUrl('delete_jeune_permanently', '&code=' + encodeURIComponent(code)));
-    const res = await fetch(gsUrl('read_archives'));
+    const res = await fetch(gsUrl('read_archives', '&conseiller=' + encodeURIComponent(currentConseiller ? currentConseiller.code : '')));
     archivesData = await res.json();
     jeunesMap = await gsReadJeunes();
     closeArchiveDetail();
@@ -4540,6 +4583,7 @@ let lastSeenMap = {}; // code -> ISO timestamp depuis le Sheet
 
 async function markAsSeenSheet(code) {
   lastSeenMap[code] = new Date().toISOString();
+  if (code.indexOf('DEMO-') === 0) return;   // jeune d'exemple du tutoriel : rien n'est écrit dans le Sheet
   try {
     await fetch(gsUrl('mark_as_read', '&code=' + encodeURIComponent(code)));
   } catch(e) {}
@@ -4859,6 +4903,116 @@ function renderAlertesView() {
 function setAlertesView(archives) {
   showingArchives = archives;
   renderAlertesView();
+}
+
+// ── RECRUTEMENTS EN DIRECT ───────────────────────────────────────────────────
+// Données : action get_recrutements (onglet Recrutements, alimenté par CAP-Alertes-Reader).
+// Par défaut, seuls les recrutements liés aux projets favoris du jeune ; « Voir tout » affiche les autres.
+let recrutementsData = [];
+let recrutementsVoirTout = false;
+const lettreRecCache = {};
+
+function recEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function recJours(iso) {
+  const d = new Date(String(iso).slice(0, 10) + 'T12:00:00');
+  const n = new Date(); n.setHours(12, 0, 0, 0);
+  return Math.round((d - n) / 86400000);
+}
+function recCompte(j) { return j <= 0 ? "Aujourd'hui" : j === 1 ? 'Demain' : 'Dans ' + j + ' jours'; }
+function recHeure(h) { if (!h) return ''; const p = String(h).split(':'); return parseInt(p[0], 10) + 'h' + (p[1] && p[1] !== '00' ? p[1] : ''); }
+
+async function loadRecrutements() {
+  if (currentRole !== 'youth' || !document.getElementById('recrutements-zone')) return;
+  try {
+    const res = await fetch(gsUrl('get_recrutements', '&favoris=' + encodeURIComponent(youthFavoris.join('|'))));
+    const data = await res.json();
+    recrutementsData = Array.isArray(data) ? data : [];
+  } catch(e) { recrutementsData = []; }
+  renderRecrutements();
+}
+
+function toggleRecrutementsVoirTout() { recrutementsVoirTout = !recrutementsVoirTout; renderRecrutements(); }
+
+function renderRecrutements() {
+  const zone = document.getElementById('recrutements-zone');
+  if (!zone) return;
+  if (!recrutementsData.length) { zone.innerHTML = ''; return; }
+  const aFavoris = youthFavoris.length > 0;
+  const filtre = aFavoris && !recrutementsVoirTout;
+  const visibles = recrutementsData.map((ev, i) => ({ ev, i })).filter(x => !filtre || x.ev.correspond);
+  const autres = recrutementsData.some(ev => !ev.correspond);
+  const bouton = aFavoris && autres
+    ? '<button class="rec-voir-tout" onclick="toggleRecrutementsVoirTout()">' + (recrutementsVoirTout ? 'Seulement mes projets' : 'Voir tout') + '</button>' : '';
+  let html = '<div class="rec-section-head"><div class="rec-section-title">Recrutements en direct</div>' + bouton + '</div>';
+  if (!visibles.length) html += '<p class="rec-vide">Aucun recrutement ne correspond à vos projets pour le moment.</p>';
+  html += visibles.map(x => renderRecrutementCard(x.ev, x.i)).join('');
+  zone.innerHTML = html;
+}
+
+function renderRecrutementCard(ev, ei) {
+  const j = recJours(ev.date);
+  const date = new Date(String(ev.date).slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(',', '');
+  const heures = ev.heure_debut ? ' · de ' + recHeure(ev.heure_debut) + (ev.heure_fin ? ' à ' + recHeure(ev.heure_fin) : '') : '';
+  const ents = ev.entreprises.map((e, ci) => ({ e, ci })).sort((a, b) => (b.e.correspond ? 1 : 0) - (a.e.correspond ? 1 : 0));
+  return '<div class="rec-card">'
+    + (ev.note ? '<div class="rec-note">' + recEsc(ev.note) + '</div>' : '')
+    + '<div class="rec-head">'
+    +   '<h3 class="rec-titre">' + recEsc(ev.titre) + '</h3>'
+    +   '<div class="rec-meta">' + recEsc(date) + recEsc(heures) + '<br>' + recEsc(ev.lieu) + '</div>'
+    +   (ev.commentaire ? '<div class="rec-prec-event">' + recEsc(ev.commentaire) + '</div>' : '')
+    +   '<span class="rec-compte">' + recCompte(j) + '</span>'
+    +   (ev.lien ? '<a class="rec-lien" href="' + recEsc(ev.lien) + '" target="_blank" rel="noopener">Informations pratiques</a>' : '')
+    + '</div>'
+    + ents.map(x => renderRecrutementEntreprise(x.e, ei, x.ci)).join('')
+    + (ev.retirees && ev.retirees.length ? '<div class="rec-retirees">N\'est plus présente : ' + recEsc(ev.retirees.join(', ')) + '</div>' : '')
+    + '</div>';
+}
+
+function renderRecrutementEntreprise(e, ei, ci) {
+  return '<details class="rec-ent"><summary>'
+    + '<span class="rec-ent-nom">' + recEsc(e.nom)
+    + (e.correspond ? '<span class="rec-tag">Votre projet</span>' : '')
+    + (e.nouvelle ? '<span class="rec-tag">Nouvelle</span>' : '') + '</span>'
+    + (e.commentaire ? '<div class="rec-prec">' + recEsc(e.commentaire) + '</div>' : '')
+    + '</summary><div class="rec-ent-corps">'
+    + '<ul class="rec-metiers">' + e.metiers.map(m => '<li>' + recEsc(m.metier) + (m.favori ? ' <span class="rec-tag">Votre projet</span>' : '') + '</li>').join('') + '</ul>'
+    + '<button class="alerte-btn-lettre" onclick="preparerLettreRecrutement(this,' + ei + ',' + ci + ')">✉ Préparer ma lettre</button>'
+    + '<div id="rec-lettre-' + ei + '-' + ci + '"></div>'
+    + '</div></details>';
+}
+
+// Une bulle par entreprise ; si l'entreprise propose plusieurs métiers, le jeune choisit celui de sa lettre.
+async function preparerLettreRecrutement(btn, ei, ci) {
+  const ent = recrutementsData[ei].entreprises[ci];
+  const zone = document.getElementById('rec-lettre-' + ei + '-' + ci);
+  if (zone.innerHTML.trim()) { zone.innerHTML = ''; btn.textContent = '✉ Préparer ma lettre'; return; }
+  let mi = ent.metiers.findIndex(m => m.favori);
+  if (mi < 0) mi = 0;
+  btn.textContent = '✕ Fermer';
+  await lettreRecrutementPour(ei, ci, mi);
+}
+
+async function lettreRecrutementPour(ei, ci, mi) {
+  const ent = recrutementsData[ei].entreprises[ci];
+  const zone = document.getElementById('rec-lettre-' + ei + '-' + ci);
+  const metier = ent.metiers[mi].metier;
+  const chips = ent.metiers.length > 1
+    ? '<div class="rec-chips">' + ent.metiers.map((m, k) => '<button class="rec-chip' + (k === mi ? ' on' : '') + '" onclick="lettreRecrutementPour(' + ei + ',' + ci + ',' + k + ')">' + recEsc(m.metier) + '</button>').join('') + '</div>'
+    : '';
+  zone.innerHTML = chips + '<div class="rec-bulle"></div>';
+  const bulle = zone.querySelector('.rec-bulle');
+  const cle = ent.nom + '||' + metier;
+  try {
+    let points = lettreRecCache[cle];
+    if (!points) {
+      bulle.innerHTML = '<div class="lettre-bulle"><div class="lettre-loading">✨ Génération en cours...</div></div>';
+      points = await genererPointsLettre(metier, ent.nom, '');     // cache commun côté serveur (entreprise + métier)
+      lettreRecCache[cle] = points;
+    }
+    afficherBulleLettre(bulle, recEsc(metier), recEsc(ent.nom), points);
+  } catch(e) {
+    bulle.innerHTML = '<div class="lettre-bulle"><div class="lettre-error">' + formatErreurLettre(e.message) + '</div></div>';
+  }
 }
 
 function formatAlertDate(dateStr) {
@@ -6474,7 +6628,16 @@ initPlaneScene({
 // Le niveau « major » (meta app-update-level du serveur) affiche l'écran de mise à jour (nouvelles fonctionnalités à expliquer) ;
 // « minor » recharge l'app automatiquement quand elle est au calme (voir tenterRechargementAuto).
 // La version et le résultat de la dernière vérification sont visibles en bas du profil (aide au diagnostic).
-const APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || '';
+// Après un rechargement de mise à jour, l'adresse contient ?maj=<heure> : on la nettoie dans la barre
+// d'adresse (sans recharger), pour garder un lien propre à copier ou à mettre en favori.
+try {
+  const u = new URL(location.href);
+  if (u.searchParams.has('maj')) {
+    u.searchParams.delete('maj');
+    history.replaceState(history.state, '', u.pathname + (u.search || '') + u.hash);
+  }
+} catch(e) {}
+const APP_VERSION =(document.querySelector('meta[name="app-version"]') || {}).content || '';
 let lastVersionCheck = 0;
 let updateScreenShown = false;
 
@@ -6636,14 +6799,141 @@ const TUTO_BULLES = {
     { v: 1, cible: '#mprofil-notif-main', pos: 'haut', texte: "Activez les notifications pour être prévenu des relances et des nouvelles places. Le tutoriel est terminé !", bouton: 'Terminer' },
   ],
 };
-const TUTO_VERSIONS = { intro: 1, dashboard: 1, youth: 1, alertes: 1, profil: 1 };
+const TUTO_VERSIONS = { intro: 1, dashboard: 1, youth: 1, alertes: 1, profil: 1, conseiller: 1 };
+
+
+// ── TUTORIEL CONSEILLER ──────────────────────────────────────────────────────
+// Bulles sur l'écran réel du tableau de bord (ordinateur et tablette). Progression gardée sur
+// l'appareil, par code conseiller (clé cap_tuto_cons_<CODE>). Pour ajouter une nouveauté : une étape
+// avec v supérieur et TUTO_VERSIONS.conseiller augmenté. Les étapes dont la cible n'existe pas
+// (aucun jeune, détail non ouvert) sont sautées automatiquement.
+// Cartes d'introduction : ce que le jeune peut faire, et comment le lui présenter (vouvoiement).
+const TUTO_CONSEILLER_CARTES = [
+  { v: 1, titre: 'Ce que vos jeunes peuvent faire',
+    texte: "Chaque jeune dispose d'un espace personnel, ouvert avec son code. Il y garde la trace de toutes ses candidatures, et vous les retrouvez sur votre tableau de bord.",
+    conseil: "Présentez-le comme son carnet de bord : il le tient à jour, vous le consultez. Il garde la main sur sa recherche." },
+  { v: 1, titre: 'Suivre ses candidatures',
+    texte: "Le jeune ajoute chaque candidature envoyée, puis change son statut au fil des réponses : envoyée, entretien, reportée, refus ou stage. Il peut aussi noter le contact et choisir une date de rappel.",
+    conseil: "Saisissez-en une ensemble lors d'un entretien. Une fois le geste vu, il le refait seul en quelques secondes." },
+  { v: 1, titre: 'Les relances',
+    texte: "Sans réponse depuis 10 jours, une candidature est signalée à relancer, dans l'app et par notification. Vous la voyez aussi sur votre tableau de bord.",
+    conseil: "Parlez de la relance comme d'un réflexe de professionnel, pas d'un contrôle. Le jeune décide s'il relance, et quand." },
+  { v: 1, titre: 'Projets favoris et annonces',
+    texte: "Le jeune choisit jusqu'à 3 métiers dans son profil. Les annonces qui correspondent apparaissent, et un geste suffit pour préparer la candidature.",
+    conseil: "Aidez-le à choisir ses métiers dès le premier entretien : sans projet défini, aucune annonce n'apparaît." },
+  { v: 1, titre: 'Les stages',
+    texte: "Quand une candidature passe en Stage, le jeune renseigne les dates et coche deux étapes : formulaire d'enregistrement rempli, rapport de stage demandé. Les liens vers les documents sont à portée de main.",
+    conseil: "Rappelez ces deux documents dès qu'un stage est décroché. L'app sert d'aide-mémoire pour le jeune." },
+  { v: 1, titre: 'Première connexion et notifications',
+    texte: "À sa première connexion, le jeune suit un tutoriel de quelques minutes. Dans son profil, il peut activer les notifications : relances, nouvelles places et rapport de stage, réglables séparément.",
+    conseil: "Remettez-lui son code personnel et conseillez d'activer les notifications dès le premier jour. Sur iPhone, l'app doit d'abord être ajoutée à l'écran d'accueil." },
+];
+const TUTO_CONSEILLER = [
+  { v: 1, cible: '#counselor-search', pos: 'bas',
+    texte: "Pour retrouver un jeune, tapez son prénom ou son code. La liste se filtre au fur et à mesure." },
+  { v: 1, cible: '#filter-bar', pos: 'bas',
+    texte: "Ces filtres gardent les jeunes qui ont au moins une candidature avec le statut choisi. <b>Stages</b> regroupe ceux qui ont décroché un stage." },
+  { v: 1, cible: '#counselor-grid .youth-card.followup', cibleAlt: '#counselor-grid .youth-card', pos: 'bas',
+    texte: "Chaque carte est un jeune, avec son nombre de candidatures par statut.<ul>"
+      + "<li><b>⏰ à relancer</b> : candidatures sans réponse depuis 10 jours.</li>"
+      + "<li><b>Point rouge</b> : nouvelles candidatures depuis votre dernière visite.</li></ul>" },
+  { v: 1, cible: '#cv-btn-grid', extra: ['#cv-btn-list'], pos: 'bas',
+    texte: "Passez de la grille à la liste. Le chiffre est le nombre de jeunes affichés." },
+  { v: 1, cible: '#counselor-grid .youth-card.followup', cibleAlt: '#counselor-grid .youth-card', interactif: true, pos: 'bas', bouton: 'Passer cette étape',
+    attend: () => !!document.querySelector('#counselor-grid .detail-panel-inline'),
+    texte: "Touchez cette carte pour ouvrir le détail du jeune. L'ouverture le marque comme vu : ses nouvelles candidatures ne sont plus signalées." },
+  { v: 1, cible: '.detail-panel-inline .detail-header-actions', pos: 'bas',
+    texte: "<b>Stats</b> ouvre ses statistiques, <b>PDF</b> exporte son tableau, <b>Archiver</b> le retire de la liste (récupérable depuis les archives)." },
+  { v: 1, cible: '.detail-panel-inline #detail-statut-select', extra: ['.detail-panel-inline #detail-type-filter-bar'], pos: 'bas',
+    texte: "Affinez le tableau par statut, puis par type : stage ou apprentissage." },
+  { v: 1, cible: '.detail-panel-inline #detail-tbody tr', pos: 'haut',
+    texte: "Une ligne par candidature.<ul>"
+      + "<li><b>Ligne jaune</b> : à relancer, avec le nombre de jours.</li>"
+      + "<li><b>Nouveau</b> : ajoutée depuis votre dernière visite.</li>"
+      + "<li><b>🔔 Rappel</b> : date de relance choisie par le jeune pour une candidature reportée.</li></ul>" },
+  { v: 1, cible: '#btn-show-archives', pos: 'bas',
+    texte: "Les profils archivés. Un jeune archivé peut être désarchivé, ou supprimé définitivement." },
+  { v: 1, cible: '#counselor-refresh-btn', extra: ['#counselor-help-btn'], pos: 'bas',
+    texte: "<b>↻</b> rafraîchit la page. <b>?</b> relance ce tutoriel quand vous voulez." },
+  { v: 1, cible: '#screen-counselor .btn-add', pos: 'bas', bouton: 'Terminer',
+    texte: () => (tutoConsDemo ? "<b>Ajoutez votre premier jeune.</b> Les jeunes d'exemple disparaissent à la fin du tutoriel. " : "<b>Ajoutez un jeune.</b> ")
+      + "Indiquez son prénom et l'initiale de son nom : un code personnel est généré, modifiable, à lui transmettre pour sa première connexion." },
+];
+
+// Jeunes d'exemple : montrés uniquement si le dossier du conseiller est vide (première connexion).
+// Ils n'existent qu'en mémoire : aucune écriture dans le Sheet, supprimés à la fin du tutoriel.
+let tutoConsDemo = false;
+function tutoConsDemoStart() {
+  tutoConsDemo = true;
+  const jour = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+  const cand = (id, nom, type, entreprise, metier, statut, jours, extra) => Object.assign({
+    id: 'demo_' + id, type, entreprise, metier, date: jour(jours), statut, contact: '', telephone: '', email: '',
+    notes: '', nom_jeune: nom, date_ajout: jour(jours), date_rappel: '', stage_rapport: '', stage_debut: '', stage_fin: '', stage_enregistre: ''
+  }, extra || {});
+  jeunesMap['DEMO-A'] = 'Léa Exemple';
+  jeunesMap['DEMO-B'] = 'Noah Exemple';
+  allData['DEMO-A'] = [
+    cand('a1', 'Léa Exemple', 'Apprentissage', "Entreprise d'exemple SA", 'Employé de commerce CFC', 'Envoyée', 14),
+    cand('a2', 'Léa Exemple', 'Apprentissage', 'Banque Exemple', 'Employé de commerce CFC', 'Entretien', 3),
+    cand('a3', 'Léa Exemple', 'Stage', 'Cabinet Exemple', 'Assistant de bureau AFP', 'Reportée', 6, { date_rappel: jour(1) }),
+  ];
+  allData['DEMO-B'] = [
+    cand('b1', 'Noah Exemple', 'Apprentissage', 'Garage Exemple', 'Mécanicien automobile CFC', 'Refus', 9),
+    cand('b2', 'Noah Exemple', 'Stage', 'Atelier Exemple', 'Mécanicien automobile CFC', 'Envoyée', 2),
+  ];
+  renderCounselor();
+}
+function tutoConsDemoCleanup() {
+  if (!tutoConsDemo) return;
+  tutoConsDemo = false;
+  try { closeDetail(); } catch(e) {}
+  Object.keys(jeunesMap).forEach(c => { if (c.indexOf('DEMO-') === 0) delete jeunesMap[c]; });
+  Object.keys(allData).forEach(c => { if (c.indexOf('DEMO-') === 0) delete allData[c]; });
+  Object.keys(lastSeenMap).forEach(c => { if (c.indexOf('DEMO-') === 0) delete lastSeenMap[c]; });
+  renderCounselor();
+}
+
+function tutoConseillerOnScreen() {
+  if (tutoActive || currentRole !== 'counselor' || !currentConseiller) return;
+  if (document.getElementById('update-screen')?.classList.contains('show')) return;
+  if (document.querySelector('.modal-overlay.open')) return;
+  if (window.innerWidth < 700) return;                       // pensé pour ordinateur et tablette
+  const st = tutoLoad();
+  if ((st.conseiller || 0) >= TUTO_VERSIONS.conseiller) return;
+  tutoConseillerStart();
+}
+function tutoConseillerStart() {
+  if (tutoActive) return;
+  const st = tutoLoad();
+  const cartes = TUTO_CONSEILLER_CARTES.filter(c => c.v > (st.conseiller || 0));
+  const bulles = () => {
+    // Dossier vide (première connexion) : deux jeunes d'exemple pour avoir quelque chose à montrer
+    if (!Object.keys(jeunesMap).length) tutoConsDemoStart();
+    // La cible préférée (carte avec le badge « à relancer ») sert si elle existe, sinon la cible de repli
+    const liste = TUTO_CONSEILLER.filter(b => b.v > (st.conseiller || 0))
+      .map(b => Object.assign({}, b, { cible: (b.cibleAlt && !document.querySelector(b.cible)) ? b.cibleAlt : b.cible }));
+    if (!liste.length) { tutoConsDemoCleanup(); tutoMark('conseiller'); return; }
+    coachStart(liste, 'conseiller', () => { if (currentDetailCode) { try { closeDetail(); } catch(e) {} } }, true);
+  };
+  // D'abord les cartes « ce que vos jeunes peuvent faire », puis la visite de l'écran
+  if (cartes.length) tutoIntroStart(cartes, 'conseiller', bulles);
+  else bulles();
+}
+function tutoConseillerRestart() {
+  if (tutoActive) return;
+  if (window.innerWidth < 700) { toast("Le tutoriel est prévu pour un écran large (ordinateur ou tablette).", true); return; }
+  try { localStorage.removeItem(tutoKey()); } catch(e) {}
+  youthTutoRemote = '';
+  tutoSendRemote('');                                         // remet aussi la progression à zéro dans le Sheet
+  tutoConseillerStart();
+}
 
 let tutoActive = false;
 let tutoDemo = false;          // l'exercice guidé est en cours
 let tutoIntroList = [], tutoIntroIdx = 0;
 let coachList = [], coachIdx = 0, coachScreen = '', coachOnEnd = null;
 
-function tutoKey() { return 'cap_tuto_' + currentUser; }
+function tutoKey() { return (currentRole === 'counselor' && currentConseiller) ? 'cap_tuto_cons_' + currentConseiller.code : 'cap_tuto_' + currentUser; }
 // Progression : colonne « tuto » de l'onglet Jeunes (format « intro:1|dashboard:1 »), avec
 // copie locale en secours si le réseau lâche. Pour chaque rubrique, on garde la valeur la plus haute.
 let youthTutoRemote = '';
@@ -6666,6 +6956,13 @@ function tutoSave(st) {
   tutoSendRemote(youthTutoRemote);
 }
 function tutoSendRemote(val) {
+  // Conseiller : colonne « tuto » de l'onglet Conseillers. Jeune : colonne « tuto » de l'onglet Jeunes.
+  if (currentRole === 'counselor' && currentConseiller) {
+    currentConseiller.tuto = val;
+    try { saveSession(); } catch(e) {}
+    fetch(gsUrl('save_tuto', '&role=conseiller&code=' + encodeURIComponent(currentConseiller.code) + '&tuto=' + encodeURIComponent(val))).catch(() => {});
+    return;
+  }
   if (!currentUser) return;
   fetch(gsUrl('save_tuto', '&code=' + encodeURIComponent(currentUser) + '&tuto=' + encodeURIComponent(val))).catch(() => {});
 }
@@ -6706,9 +7003,10 @@ function tutoOnScreen(name) {
 }
 
 // ── Cartes d'introduction ────────────────────────────────────────────────────
-function tutoIntroStart(liste, name) {
+let tutoIntroOnEnd = null;
+function tutoIntroStart(liste, name, onEnd) {
   tutoActive = true; tutoIntroList = liste; tutoIntroIdx = 0;
-  tutoIntroAfter = name;
+  tutoIntroAfter = name; tutoIntroOnEnd = onEnd || null;
   document.getElementById('tuto-intro').classList.add('show');
   tutoIntroRender();
 }
@@ -6718,6 +7016,9 @@ function tutoIntroRender() {
   document.getElementById('tuto-step-num').textContent = (tutoIntroIdx + 1) + ' sur ' + n;
   document.getElementById('tuto-title').textContent = c.titre;
   document.getElementById('tuto-text').textContent = c.texte;
+  const cons = document.getElementById('tuto-conseil');
+  cons.hidden = !c.conseil;
+  document.getElementById('tuto-conseil-text').textContent = c.conseil || '';
   document.getElementById('tuto-dots').innerHTML = tutoIntroList.map((_, i) => '<span class="tuto-dot' + (i === tutoIntroIdx ? ' on' : '') + '"></span>').join('');
   const last = tutoIntroIdx === n - 1;
   document.getElementById('tuto-next').textContent = last ? "C'est parti" : 'Suivant';
@@ -6729,8 +7030,10 @@ function tutoIntroNext() {
 }
 function tutoIntroEnd() {
   document.getElementById('tuto-intro').classList.remove('show');
-  tutoMark('intro');
   tutoActive = false;
+  // Cartes du tutoriel conseiller : on enchaîne avec les bulles, sans toucher à la progression des jeunes
+  if (tutoIntroOnEnd) { const f = tutoIntroOnEnd; tutoIntroOnEnd = null; setTimeout(f, 200); return; }
+  tutoMark('intro');
   setTimeout(() => tutoOnScreen(tutoIntroAfter || 'dashboard'), 200);
 }
 
@@ -6768,7 +7071,7 @@ function coachRender() {
   if (!el) { coachAdvance(); return; }
   try { el.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch(e) { el.scrollIntoView(); }
   document.getElementById('coach').classList.toggle('interactif', !!b.interactif);
-  document.getElementById('coach-count').textContent = coachList.length > 1 ? (coachIdx + 1) + ' sur ' + coachList.length : '';
+  document.getElementById('coach-count').textContent = (coachList.length > 1 && coachScreen !== 'conseiller') ? (coachIdx + 1) + ' sur ' + coachList.length : '';
   document.getElementById('coach-text').innerHTML = typeof b.texte === 'function' ? b.texte() : b.texte;
   const nx = document.getElementById('coach-next');
   nx.textContent = b.bouton || (coachIdx === coachList.length - 1 ? 'Terminer' : 'Suivant');
@@ -6867,6 +7170,7 @@ function coachStop(passer) {
   tutoActive = false;
   const fin = coachOnEnd; coachOnEnd = null;
   if (tutoDemo) tutoDemoCleanup();
+  if (tutoConsDemo) tutoConsDemoCleanup();
   if (coachScreen) tutoMark(coachScreen);
   if (fin && !passer) fin();
 }
