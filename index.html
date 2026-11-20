@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.20-5">
-<meta name="app-update-level" content="major">
+<meta name="app-version" content="2026.11.20-6">
+<meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -5059,8 +5059,9 @@ function ouvrirMailRemerciement(ei, ci) {
   const de = /^[aeiouyéèêàâîôûh]/i.test(metierBas) ? 'd\'' : 'de ';
   const dateTxt = new Date(String(ev.date).slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
   const nom = (document.getElementById('youth-header-code') || {}).textContent || '';
-  const objet = 'Merci pour notre échange – Candidature pour un apprentissage ' + de + metierBas;
-  const corps = 'Bonjour ' + (recruteur || 'Madame, Monsieur') + ',\n\n'
+  const objet = 'Recrutement en direct ' + dateTxt + ' - Remerciement';
+  const corps = 'À l\'attention de la personne présente lors du recrutement en direct du ' + dateTxt + '\n'
+    + 'Bonjour ' + (recruteur || 'Madame, Monsieur') + ',\n\n'
     + 'Je vous remercie pour le temps que vous m\'avez accordé lors du recrutement en direct du ' + dateTxt + ' et pour les informations partagées au sujet du métier ' + de + metierBas + '.\n\n'
     + 'Notre échange a renforcé mon intérêt pour cette profession et pour ' + ent.nom + '. Je reste à votre disposition pour toute information complémentaire.\n\n'
     + 'Avec mes meilleures salutations,\n\n' + nom.trim();
