@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.25-1">
+<meta name="app-version" content="2026.11.25-2">
 <meta name="app-update-level" content="minor">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
@@ -1707,46 +1707,55 @@ tr:last-child td { border-bottom: none; }
 
 /* ── Carte « Recrutement en direct » : palette Cité des métiers (à régler ici, une seule fois) ── */
 :root {
-  --cdm-primary: oklch(40% 0.155 255);      /* bandeau et accents de la carte */
-  --cdm-primary-ink: oklch(99% 0.003 80);   /* texte sur le bandeau */
-  --cdm-soft: oklch(94% 0.03 255);          /* fond clair des notes et étiquettes */
-  --cdm-soft-ink: oklch(30% 0.09 255);
+  --cdm-primary: #06152B;       /* bandeau */
+  --cdm-primary-ink: #FFFFFF;   /* texte sur le bandeau */
+  --cdm-accent: #F6BB43;        /* jaune du site : sous-titre, pastille, étiquettes */
+  --cdm-accent-ink: #06152B;    /* texte sur le jaune */
+  --cdm-soft: #EEF1F6;          /* fond clair des notes */
+  --cdm-ink: #1D2B3F;           /* titres et textes */
+  --cdm-grey: #666F7E;          /* textes secondaires */
+  --cdm-line: #E0E3E8;          /* filets */
 }
-.rec-card { border-color: var(--cdm-primary); }
-.rec-head { background: var(--cdm-primary); color: var(--cdm-primary-ink); }
+.rec-card { border-color: var(--cdm-line); box-shadow: 0 2px 10px rgba(6,21,43,.08); }
+.rec-head { background: var(--cdm-primary); color: var(--cdm-primary-ink); padding: 20px 16px; }
+.rec-kicker { font-size: 14px; font-weight: 500; color: var(--cdm-accent); margin-bottom: 4px; }
 .rec-head .rec-titre, .rec-head .rec-meta, .rec-head .rec-prec-event { color: var(--cdm-primary-ink); }
-.rec-head .rec-compte { background: var(--cdm-primary-ink); color: var(--cdm-primary); }
-.rec-head .rec-lien { color: var(--cdm-primary-ink); text-decoration: underline; text-underline-offset: 3px; }
-.rec-note { background: var(--cdm-soft); color: var(--cdm-soft-ink); }
-.rec-tag { background: var(--cdm-soft); color: var(--cdm-primary); }
-.rec-etoile, .rec-lien { color: var(--cdm-primary); }
+.rec-head .rec-compte { background: var(--cdm-accent); color: var(--cdm-accent-ink); }
+.rec-head .rec-lien { color: var(--cdm-accent); text-decoration: underline; text-underline-offset: 3px; }
+.rec-note { background: var(--cdm-soft); color: var(--cdm-ink); }
+.rec-ent { border-top-color: var(--cdm-line); }
+.rec-ent-nom, .rec-metier-nom, .rec-metiers { color: var(--cdm-ink); }
+.rec-tag { background: var(--cdm-accent); color: var(--cdm-accent-ink); }
+.rec-etoile { color: var(--cdm-primary); }
 .rec-rend-btn { border-color: var(--cdm-primary); color: var(--cdm-primary); }
 .rec-rend-btn.on { background: var(--cdm-primary); color: var(--cdm-primary-ink); }
 .rec-chip.on { border-color: var(--cdm-primary); color: var(--cdm-primary); }
 
-/* ── Mes rencontres (historique des recrutements en direct) ── */
-.renc-section { margin-bottom: 12px; }
-.renc-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-.renc-nom { font-family: 'Space Grotesk','DM Sans',sans-serif; font-size: 16px; font-weight: 600; color: var(--text); }
-.renc-meta { font-size: 14px; color: var(--text2); line-height: 1.45; }
-.renc-label { font-size: 13px; color: var(--text2); margin-top: 6px; }
-.renc-champ { width: 100%; min-height: 44px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font: inherit; font-size: 16px; resize: vertical; }
+/* ── Mes rencontres : menu déroulant au pied de la carte ── */
+.renc-section { border-top: 1px solid var(--cdm-line); background: var(--cdm-soft); }
+.renc-summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 16px; font-weight: 600; color: var(--cdm-ink); }
+.renc-summary::-webkit-details-marker { display: none; }
+.renc-chevron { width: 10px; height: 10px; border-right: 2px solid var(--cdm-ink); border-bottom: 2px solid var(--cdm-ink); transform: rotate(45deg); margin-right: 4px; }
+.renc-section[open] .renc-chevron { transform: rotate(-135deg); }
+.renc-item { padding: 14px 16px; border-top: 1px solid var(--cdm-line); display: flex; flex-direction: column; gap: 6px; background: var(--surface); }
+.renc-nom { font-family: 'Space Grotesk','DM Sans',sans-serif; font-size: 16px; font-weight: 600; color: var(--cdm-ink); }
+.renc-meta { font-size: 14px; color: var(--cdm-grey); line-height: 1.45; }
+.renc-label { font-size: 13px; color: var(--cdm-grey); margin-top: 6px; }
+.renc-champ { width: 100%; min-height: 44px; padding: 10px 12px; border: 1.5px solid var(--cdm-line); border-radius: 10px; background: var(--surface); color: var(--cdm-ink); font: inherit; font-size: 16px; resize: vertical; }
 .renc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .renc-btn { border: 1.5px solid var(--cdm-primary); background: none; color: var(--cdm-primary); border-radius: 20px; padding: 0 16px; min-height: 44px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.renc-btn[disabled] { border-color: var(--border); color: var(--text2); cursor: default; }
-
-#recrutements-zone, #rencontres-zone { width: 100%; }
-.renc-toggle::after { content: 'Afficher'; }
-.renc-section[open] .renc-toggle::after { content: 'Masquer'; }
+.renc-btn[disabled] { border-color: var(--cdm-line); color: var(--cdm-grey); cursor: default; }
+#recrutements-zone { width: 100%; }
 
 /* ── Pastille de notifications ── */
 .notif-bell { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); display: none; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
 .notif-bell svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.notif-bell-float { position: fixed; top: calc(10px + var(--safe-top)); right: 12px; z-index: 120; box-shadow: var(--shadow); }
+.notif-bell-float { position: fixed; top: calc(22px + var(--safe-top)); right: 12px; z-index: 120; box-shadow: var(--shadow); }
 .notif-bell.visible { display: flex; }
 .notif-count { position: absolute; top: -3px; right: -3px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: oklch(52% 0.19 25); color: #fff; font-size: 12px; font-weight: 600; display: none; align-items: center; justify-content: center; border: 2px solid var(--surface); }
 .notif-count.on { display: flex; }
 .notif-desktop { display: none; }
+@media (max-width: 480px) { #screen-youth .mcand-header-m { margin-top: 52px; } }
 @media (min-width: 481px) { .notif-bell-float { display: none !important; } .notif-desktop.visible { display: flex; } }
 @media (max-width: 480px) { .notif-desktop { display: none !important; } }
 .notif-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(20,16,12,.45); display: none; align-items: flex-end; justify-content: center; }
@@ -1757,7 +1766,6 @@ tr:last-child td { border-bottom: none; }
 .notif-titre { font-family: 'Space Grotesk','DM Sans',sans-serif; font-size: 18px; font-weight: 600; color: var(--text); }
 .notif-top button { background: none; border: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 8px; cursor: pointer; }
 .notif-liste { overflow-y: auto; padding: 4px 0 12px; }
-.notif-groupe { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); padding: 12px 16px 4px; }
 .notif-item { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; background: none; border: none; border-bottom: 1px solid var(--border); padding: 12px 16px; min-height: 56px; font: inherit; color: var(--text); cursor: pointer; }
 .notif-item.non-lu { background: var(--accent-light); }
 .notif-point { flex: 0 0 10px; width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; background: transparent; }
@@ -2095,7 +2103,6 @@ tr:last-child td { border-bottom: none; }
     </div>
   </div>
   <div class="alertes-body" id="recrutements-zone" style="padding-bottom:0"></div>
-  <div class="alertes-body" id="rencontres-zone" style="padding-bottom:0"></div>
   <div class="alertes-body" id="alertes-body">
     <!-- Contenu généré dynamiquement -->
   </div>
@@ -3014,7 +3021,10 @@ let currentUser = null;
 let currentRole = null;
 let notifJournal = [];          // journal des notifications (pastille)
 let notifDernierChargement = 0;
-let rencontresData = [];
+const ECRANS_CLOCHE = ['dashboard', 'youth', 'alertes', 'profil'];
+let notifLuLocal = new Set();
+try { notifLuLocal = new Set(JSON.parse(localStorage.getItem('cap_notif_lues') || '[]')); } catch(e) {}
+const rencOuverts = {};
 let allData = {};
 let editingId = null;
 let pendingAlertId = null; // ID alerte en attente de confirmation via saveCandidature
@@ -3293,7 +3303,7 @@ async function loginCounselor() {
 
 function logout() {
   youthTutoRemote = '';
-  currentUser = null; currentRole = null; currentConseiller = null; youthConseiller = ''; allData = {}; youthFilter = 'all'; youthFavoris = []; alertesData = []; alertesPostulees = new Set(); favorisBannerDismissed = false; mobileOnlyRelances = false; notifJournal = []; notifDernierChargement = 0; rencontresData = [];
+  currentUser = null; currentRole = null; currentConseiller = null; youthConseiller = ''; allData = {}; youthFilter = 'all'; youthFavoris = []; alertesData = []; alertesPostulees = new Set(); favorisBannerDismissed = false; mobileOnlyRelances = false; notifJournal = []; notifDernierChargement = 0;
   alertesData = []; alertesPostulees = new Set();
   clearSession();
   showScreen('login');
@@ -3345,7 +3355,7 @@ function showScreen(name) {
   updateMobileNav(name);
   if (typeof tutoOnScreen === 'function' && ['dashboard','youth','alertes','profil'].indexOf(name) >= 0) setTimeout(() => tutoOnScreen(name), 300);
   if (name === 'counselor' && typeof tutoConseillerOnScreen === 'function') setTimeout(tutoConseillerOnScreen, 900);
-  if (name === 'alertes' && typeof loadRecrutements === 'function') { loadRecrutements(); loadRencontres(); }
+  if (name === 'alertes' && typeof loadRecrutements === 'function') loadRecrutements();
   if (typeof majCloche === 'function') majCloche(name);
 }
 
@@ -5047,6 +5057,12 @@ function renderRecrutements() {
     ? '<button class="rec-voir-tout" onclick="toggleRecrutementsVoirTout()">' + (recrutementsVoirTout ? 'Seulement mes projets' : 'Voir tout') + '</button>' : '';
   let html = '<div class="rec-section-head"><div class="rec-section-title">Recrutements en direct</div>' + bouton + '</div>';
   if (!visibles.length) html += '<p class="rec-vide">Aucun recrutement ne correspond à vos projets pour le moment.</p>';
+  // À venir d'abord (le plus proche en tête), puis les passés (le plus récent en tête)
+  visibles.sort((a, b) => {
+    const pa = recJours(a.ev.date) < 0, pb = recJours(b.ev.date) < 0;
+    if (pa !== pb) return pa ? 1 : -1;
+    return pa ? (a.ev.date < b.ev.date ? 1 : -1) : (a.ev.date < b.ev.date ? -1 : 1);
+  });
   html += visibles.map(x => renderRecrutementCard(x.ev, x.i)).join('');
   zone.innerHTML = html;
 }
@@ -5059,6 +5075,7 @@ function renderRecrutementCard(ev, ei) {
   return '<div class="rec-card">'
     + (ev.note ? '<div class="rec-note">' + recEsc(ev.note) + '</div>' : '')
     + '<div class="rec-head">'
+    +   '<div class="rec-kicker">Apprentissage AFP/CFC</div>'
     +   '<h3 class="rec-titre">' + recEsc(ev.titre) + '</h3>'
     +   '<div class="rec-meta">' + recEsc(date) + recEsc(heures) + '<br>' + recEsc(ev.lieu) + '</div>'
     +   (ev.commentaire ? '<div class="rec-prec-event">' + recEsc(ev.commentaire) + '</div>' : '')
@@ -5067,6 +5084,7 @@ function renderRecrutementCard(ev, ei) {
     + '</div>'
     + ents.map(x => renderRecrutementEntreprise(x.e, ei, x.ci)).join('')
     + (ev.retirees && ev.retirees.length ? '<div class="rec-retirees">N\'est plus présente : ' + recEsc(ev.retirees.join(', ')) + '</div>' : '')
+    + renderRencontresCard(ev, ei)
     + '</div>';
 }
 
@@ -5097,11 +5115,6 @@ function renderRecrutementRend(e, ei, ci) {
   let html = '<div class="rec-rend">'
     + '<button type="button" class="rec-rend-btn' + (e.rend ? ' on' : '') + '" aria-pressed="' + (e.rend ? 'true' : 'false') + '" onclick="toggleRecrutementRend(' + ei + ',' + ci + ')">'
     + (e.rend ? '✓ Je m\'y rends' : 'Je m\'y rends') + '</button>';
-  if (e.rend && recJours(ev.date) <= 0) {
-    html += '<label class="rec-recruteur-label" for="rec-recruteur-' + ei + '-' + ci + '">Nom de la personne rencontrée (facultatif)</label>'
-      + '<input type="text" id="rec-recruteur-' + ei + '-' + ci + '" class="rec-recruteur" maxlength="60" placeholder="Par exemple : Madame Dupont" autocomplete="off" value="' + recEsc(e.recruteur || '') + '" onchange="saveRecrutementRecruteur(' + ei + ',' + ci + ', this.value)">'
-      + '<button type="button" class="alerte-btn-lettre" onclick="ouvrirMailRemerciement(' + ei + ',' + ci + ')">✉ Écrire un mail de remerciement</button>';
-  }
   return html + '</div>';
 }
 
@@ -5183,110 +5196,85 @@ async function preparerLettreRecrutement(btn, ei, ci, mi) {
   }
 }
 
-// ── MES RENCONTRES : mémoire des recrutements en direct passés ───────────────
-// Source : action get_rencontres (entreprises marquées « Je m'y rends » dont l'événement est passé).
-
+// ── MES RENCONTRES : mémoire des recrutements en direct passés, sur la carte de l'événement ──
+// Données : entreprises « Je m'y rends » (get_recrutements : rend, recruteur, note_jeune) d'un événement passé ou du jour.
 function recHash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
-function idCandRencontre(r) { return 'rec_' + recHash(r.cle + '|' + r.entreprise); }
-function metierRencontre(r) {
-  const norm = x => String(x || '').toLowerCase().trim();
-  return (r.metiers || []).find(m => youthFavoris.some(f => norm(f) === norm(m))) || (r.metiers || [])[0] || '';
+function idCandRencontre(ev, ent) { return 'rec_' + recHash(ev.cle + '|' + ent.nom); }
+function metierRencontre(ent) {
+  const m = ent.metiers.find(x => x.favori) || ent.metiers[0];
+  return m ? m.metier : '';
 }
-function rencontreDansCandidatures(r) { return (allData[currentUser] || []).some(i => i.id === idCandRencontre(r)); }
+function rencontreDansCandidatures(ev, ent) { return (allData[currentUser] || []).some(i => i.id === idCandRencontre(ev, ent)); }
+function rencontresDe(ev) {
+  return recJours(ev.date) <= 0 ? ev.entreprises.map((e, ci) => ({ e, ci })).filter(x => x.e.rend) : [];
+}
 
-async function loadRencontres() {
-  if (currentRole !== 'youth' || !document.getElementById('rencontres-zone')) return;
+function renderRencontresCard(ev, ei) {
+  const liste = rencontresDe(ev);
+  if (!liste.length) return '';
+  return '<details class="renc-section" data-ei="' + ei + '"' + (rencOuverts[ei] ? ' open' : '') + ' ontoggle="rencOuverts[' + ei + ']=this.open">'
+    + '<summary class="renc-summary"><span class="renc-summary-titre">Mes rencontres (' + liste.length + ')</span><span class="renc-chevron" aria-hidden="true"></span></summary>'
+    + liste.map(x => {
+      const e = x.e, ci = x.ci, dejaCand = rencontreDansCandidatures(ev, e);
+      return '<div class="renc-item">'
+        + '<div class="renc-nom">' + recEsc(e.nom) + '</div>'
+        + (e.metiers.length ? '<div class="renc-meta">' + recEsc(e.metiers.map(m => m.metier).join(', ')) + '</div>' : '')
+        + '<label class="renc-label" for="rec-recruteur-' + ei + '-' + ci + '">Personne rencontrée</label>'
+        + '<input type="text" id="rec-recruteur-' + ei + '-' + ci + '" class="renc-champ" maxlength="60" placeholder="Par exemple : Madame Dupont" autocomplete="off" value="' + recEsc(e.recruteur || '') + '" onchange="saveRencontreChamp(' + ei + ',' + ci + ',\'recruteur\',this.value)">'
+        + '<label class="renc-label" for="renc-note-' + ei + '-' + ci + '">Mes notes</label>'
+        + '<textarea id="renc-note-' + ei + '-' + ci + '" class="renc-champ" rows="2" maxlength="300" placeholder="Ce dont vous voulez vous souvenir" onchange="saveRencontreChamp(' + ei + ',' + ci + ',\'note\',this.value)">' + recEsc(e.note_jeune || '') + '</textarea>'
+        + '<div class="renc-actions">'
+        + '<button type="button" class="renc-btn" onclick="ouvrirMailRemerciement(' + ei + ',' + ci + ')">✉ Mail de remerciement</button>'
+        + '<button type="button" class="renc-btn" ' + (dejaCand ? 'disabled' : 'onclick="ajouterRencontreCandidature(' + ei + ',' + ci + ')"') + '>' + (dejaCand ? '✓ Dans mes candidatures' : 'Ajouter à mes candidatures') + '</button>'
+        + '</div></div>';
+    }).join('')
+    + '</details>';
+}
+
+async function saveRencontreChamp(ei, ci, champ, valeur) {
+  const ev = recrutementsData[ei], ent = ev.entreprises[ci];
+  const v = String(valeur || '').trim();
+  if (champ === 'recruteur') ent.recruteur = v; else ent.note_jeune = v;
   try {
-    const res = await fetch(gsUrl('get_rencontres', '&code=' + encodeURIComponent(currentUser || '')));
-    const data = await res.json();
-    rencontresData = Array.isArray(data) ? data : [];
-  } catch(e) { rencontresData = []; }
-  renderRencontres();
-}
-
-function renderRencontres() {
-  const zone = document.getElementById('rencontres-zone');
-  if (!zone) return;
-  if (!rencontresData.length) { zone.innerHTML = ''; return; }
-  const ouverts = zone.querySelector('details') && zone.querySelector('details').open;
-  let html = '<details class="renc-section"' + (ouverts ? ' open' : '') + '><summary class="rec-section-head" style="cursor:pointer;min-height:44px;list-style:none">'
-    + '<span class="rec-section-title">Mes rencontres (' + rencontresData.length + ')</span><span class="rec-voir-tout renc-toggle" style="display:inline-flex;align-items:center"></span></summary>';
-  html += rencontresData.map((r, i) => {
-    const date = new Date(String(r.date).slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
-    const dejaCand = rencontreDansCandidatures(r);
-    return '<div class="renc-item">'
-      + '<div class="renc-nom">' + recEsc(r.entreprise) + '</div>'
-      + '<div class="renc-meta">' + recEsc(date) + (r.lieu ? ' · ' + recEsc(r.lieu) : '') + (r.metiers && r.metiers.length ? '<br>' + recEsc(r.metiers.join(', ')) : '') + '</div>'
-      + '<label class="renc-label" for="renc-rec-' + i + '">Personne rencontrée</label>'
-      + '<input type="text" id="renc-rec-' + i + '" class="renc-champ" maxlength="60" placeholder="Par exemple : Madame Dupont" autocomplete="off" value="' + recEsc(r.recruteur) + '" onchange="saveRencontreChamp(' + i + ', \'recruteur\', this.value)">'
-      + '<label class="renc-label" for="renc-note-' + i + '">Mes notes</label>'
-      + '<textarea id="renc-note-' + i + '" class="renc-champ" rows="2" maxlength="300" placeholder="Ce dont vous voulez vous souvenir" onchange="saveRencontreChamp(' + i + ', \'note\', this.value)">' + recEsc(r.note) + '</textarea>'
-      + '<div class="renc-actions">'
-      + '<button type="button" class="renc-btn" onclick="mailRencontre(' + i + ')">✉ Mail de remerciement</button>'
-      + '<button type="button" class="renc-btn" ' + (dejaCand ? 'disabled' : 'onclick="ajouterRencontreCandidature(' + i + ')"') + '>' + (dejaCand ? '✓ Dans mes candidatures' : 'Ajouter à mes candidatures') + '</button>'
-      + '</div></div>';
-  }).join('');
-  zone.innerHTML = html + '</details>';
-}
-
-async function saveRencontreChamp(i, champ, valeur) {
-  const r = rencontresData[i];
-  r[champ] = String(valeur || '').trim();
-  try {
-    const params = '&code=' + encodeURIComponent(currentUser) + '&cle=' + encodeURIComponent(r.cle) + '&entreprise=' + encodeURIComponent(r.entreprise)
-      + '&rend=true&' + champ + '=' + encodeURIComponent(r[champ]);
+    const params = '&code=' + encodeURIComponent(currentUser) + '&cle=' + encodeURIComponent(ev.cle) + '&entreprise=' + encodeURIComponent(ent.nom)
+      + '&rend=true&' + champ + '=' + encodeURIComponent(v);
     const res = await fetch(gsUrl('save_recrutement_jeune', params));
     const json = await res.json();
     if (!json || json.success === false) throw new Error('save');
   } catch(e) { toast('Impossible d\'enregistrer. Vérifiez votre connexion.', true); }
 }
 
-function mailRencontre(i) {
-  const r = rencontresData[i];
-  composerMailRemerciement(r.entreprise, metierRencontre(r), r.date, (r.recruteur || '').trim());
-}
-
 // Crée la candidature « Apprentissage » liée à la rencontre (identifiant stable : jamais en double)
-async function ajouterRencontreCandidature(i) {
-  const r = rencontresData[i];
-  if (rencontreDansCandidatures(r)) return;
-  const dateTxt = new Date(String(r.date).slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
+async function ajouterRencontreCandidature(ei, ci) {
+  const ev = recrutementsData[ei], ent = ev.entreprises[ci];
+  if (rencontreDansCandidatures(ev, ent)) return;
+  const dateTxt = new Date(String(ev.date).slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
   const item = {
-    id: idCandRencontre(r), type: 'Apprentissage', entreprise: r.entreprise, metier: metierRencontre(r),
-    date: String(r.date).slice(0, 10), statut: 'Envoyée', date_rappel: '',
-    contact: r.recruteur || '', telephone: '', email: '',
-    notes: ('Rencontré lors du recrutement en direct du ' + dateTxt + (r.note ? '. ' + r.note : '')).slice(0, 500),
+    id: idCandRencontre(ev, ent), type: 'Apprentissage', entreprise: ent.nom, metier: metierRencontre(ent),
+    date: String(ev.date).slice(0, 10), statut: 'Envoyée', date_rappel: '',
+    contact: ent.recruteur || '', telephone: '', email: '',
+    notes: ('Rencontré lors du recrutement en direct du ' + dateTxt + (ent.note_jeune ? '. ' + ent.note_jeune : '')).slice(0, 500),
     stage_debut: '', stage_fin: '', stage_enregistre: '', stage_rapport: '', date_ajout: new Date().toISOString()
   };
   if (!allData[currentUser]) allData[currentUser] = [];
   allData[currentUser].push(item);
-  renderRencontres();
+  renderRecrutements();
   try {
     await gsAppend(item);
     renderYouth();
     toast('Candidature ajoutée ✓');
   } catch(e) {
     allData[currentUser] = allData[currentUser].filter(x => x.id !== item.id);
-    renderRencontres();
+    renderRecrutements();
     toast('Impossible d\'ajouter la candidature. Réessayez.', true);
   }
 }
 
-// ── PASTILLE DE NOTIFICATIONS ────────────────────────────────────────────────
-// « À faire » : calculé par l'app (relances, annonces en attente). « Historique » : journal serveur (onglet Notifications).
-const ECRANS_CLOCHE = ['dashboard', 'youth', 'alertes', 'profil'];
-
-function notifsAFaire() {
-  const l = [];
-  if (currentRole !== 'youth') return l;
-  let nr = 0, na = 0;
-  try { nr = countRelances(); na = countAnnoncesEnAttente(); } catch(e) { return l; }
-  if (nr > 0) l.push({ id: 'calc-relances', titre: nr === 1 ? '1 candidature à relancer' : nr + ' candidatures à relancer', corps: 'Touchez pour voir lesquelles.', cible: 'relances', lu: false, calc: true });
-  if (na > 0) l.push({ id: 'calc-annonces', titre: na === 1 ? '1 nouvelle annonce pour vos projets' : na + ' nouvelles annonces pour vos projets', corps: 'Touchez pour les consulter.', cible: 'annonces', lu: false, calc: true });
-  return l;
-}
-
-function nbNotifsNonLues() { return notifsAFaire().length + notifJournal.filter(n => !n.lu).length; }
+// ── PASTILLE DE NOTIFICATIONS : historique de toutes les notifications push envoyées ──
+// Source : onglet Notifications (écrit par sendPushNotification). L'état « lu » est aussi gardé sur l'appareil.
+function sauverNotifLues() { try { localStorage.setItem('cap_notif_lues', JSON.stringify(Array.from(notifLuLocal).slice(-300))); } catch(e) {} }
+function notifEstLue(n) { return !!n.lu || notifLuLocal.has(n.id); }
+function nbNotifsNonLues() { return currentRole === 'youth' ? notifJournal.filter(n => !notifEstLue(n)).length : 0; }
 
 function majCloche(nomEcran) {
   const visible = currentRole === 'youth' && ECRANS_CLOCHE.indexOf(nomEcran) > -1;
@@ -5305,9 +5293,9 @@ async function chargerNotifs() {
   if (currentRole !== 'youth' || !currentUser) return;
   notifDernierChargement = Date.now();
   try {
-    const res = await fetch(gsUrl('get_notifications', '&code=' + encodeURIComponent(currentUser)));
+    const res = await fetch(gsUrl('get_notifications', '&code=' + encodeURIComponent(currentUser) + '&_=' + Date.now()), { cache: 'no-store' });
     const data = await res.json();
-    notifJournal = Array.isArray(data) ? data : [];
+    if (Array.isArray(data)) notifJournal = data;
   } catch(e) { /* on garde le journal déjà chargé */ }
   majPastille();
   if (document.getElementById('notif-overlay').classList.contains('open')) rendreNotifs();
@@ -5318,21 +5306,17 @@ function notifDate(iso) {
   return d.toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' }) + ' à ' + d.toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' });
 }
 
-function notifItemHtml(n, cle) {
-  return '<button type="button" class="notif-item' + (n.lu ? '' : ' non-lu') + '" onclick="ouvrirNotif(\'' + cle + '\')">'
-    + '<span class="notif-point" aria-hidden="true"></span><span>'
-    + '<div class="notif-item-titre">' + (n.lu ? '' : '<span class="sr-only" style="position:absolute;left:-9999px">Non lu : </span>') + recEsc(n.titre) + '</div>'
-    + '<div class="notif-item-corps">' + recEsc(n.corps) + '</div>'
-    + (n.date ? '<div class="notif-item-date">' + recEsc(notifDate(n.date)) + '</div>' : '') + '</span></button>';
-}
-
 function rendreNotifs() {
-  const afaire = notifsAFaire();
-  let html = '';
-  if (afaire.length) html += '<div class="notif-groupe">À faire</div>' + afaire.map(n => notifItemHtml(n, n.id)).join('');
-  if (notifJournal.length) html += '<div class="notif-groupe">Historique</div>' + notifJournal.map(n => notifItemHtml(n, n.id)).join('');
-  if (!html) html = '<div class="notif-vide">Aucune notification pour le moment.</div>';
-  document.getElementById('notif-liste').innerHTML = html;
+  const liste = document.getElementById('notif-liste');
+  if (!notifJournal.length) { liste.innerHTML = '<div class="notif-vide">Aucune notification pour le moment.</div>'; return; }
+  liste.innerHTML = notifJournal.map(n => {
+    const lu = notifEstLue(n);
+    return '<button type="button" class="notif-item' + (lu ? '' : ' non-lu') + '" onclick="ouvrirNotif(\'' + recEsc(n.id) + '\')">'
+      + '<span class="notif-point" aria-hidden="true"></span><span>'
+      + '<div class="notif-item-titre">' + (lu ? '' : '<span style="position:absolute;left:-9999px">Non lu : </span>') + recEsc(n.titre) + '</div>'
+      + '<div class="notif-item-corps">' + recEsc(n.corps) + '</div>'
+      + '<div class="notif-item-date">' + recEsc(notifDate(n.date)) + '</div></span></button>';
+  }).join('');
 }
 
 function ouvrirNotifs() {
@@ -5342,26 +5326,37 @@ function ouvrirNotifs() {
 }
 function fermerNotifs() { document.getElementById('notif-overlay').classList.remove('open'); }
 
-async function marquerLue(id) {
+function marquerLue(id) {
   const n = notifJournal.find(x => x.id === id);
-  if (!n || n.lu) return;
-  n.lu = true; majPastille();
-  try { await fetch(gsUrl('mark_notifications_lues', '&code=' + encodeURIComponent(currentUser) + '&id=' + encodeURIComponent(id))); }
-  catch(e) { n.lu = false; majPastille(); }
+  if (!n || notifEstLue(n)) return;
+  notifLuLocal.add(id); sauverNotifLues(); majPastille();
+  fetch(gsUrl('mark_notifications_lues', '&code=' + encodeURIComponent(currentUser) + '&id=' + encodeURIComponent(id) + '&_=' + Date.now()), { cache: 'no-store' }).catch(() => {});
 }
 
-async function marquerToutesLues() {
-  const avant = notifJournal.map(n => n.lu);
-  notifJournal.forEach(n => { n.lu = true; });
-  majPastille(); rendreNotifs();
-  try { await fetch(gsUrl('mark_notifications_lues', '&code=' + encodeURIComponent(currentUser))); }
-  catch(e) { notifJournal.forEach((n, i) => { n.lu = avant[i]; }); majPastille(); rendreNotifs(); toast('Impossible de mettre à jour. Réessayez.', true); }
+function marquerToutesLues() {
+  notifJournal.forEach(n => notifLuLocal.add(n.id));
+  sauverNotifLues(); majPastille(); rendreNotifs();
+  fetch(gsUrl('mark_notifications_lues', '&code=' + encodeURIComponent(currentUser) + '&_=' + Date.now()), { cache: 'no-store' }).catch(() => {});
+}
+
+// Attend que la carte demandée soit affichée (chargement asynchrone), puis la montre
+function montrerQuandPret(selecteur, ouvrir) {
+  let essais = 0;
+  const t = setInterval(() => {
+    const el = document.querySelector(selecteur);
+    if (el || ++essais > 15) {
+      clearInterval(t);
+      if (!el) return;
+      if (ouvrir) el.open = true;
+      el.scrollIntoView({ block: 'center' });
+    }
+  }, 300);
 }
 
 function ouvrirNotif(id) {
-  const n = notifsAFaire().find(x => x.id === id) || notifJournal.find(x => x.id === id);
+  const n = notifJournal.find(x => x.id === id);
   if (!n) return;
-  if (!n.calc) marquerLue(id);
+  marquerLue(id);
   fermerNotifs();
   const versAlertes = () => { if (isMobileLayout()) goMobile('alertes'); else showAlertes(); };
   const versCandidatures = (opts) => { if (isMobileLayout()) goMobile('youth', opts); else { renderYouth(); showScreen('youth'); } };
@@ -5369,11 +5364,8 @@ function ouvrirNotif(id) {
     case 'relances': versCandidatures({ relances: true }); break;
     case 'candidatures': versCandidatures(); break;
     case 'annonces': versAlertes(); break;
-    case 'recrutements': versAlertes(); setTimeout(() => { const z = document.getElementById('recrutements-zone'); if (z) z.scrollIntoView({ block: 'start' }); }, 400); break;
-    case 'rencontres':
-      versAlertes();
-      setTimeout(() => { const z = document.getElementById('rencontres-zone'); if (!z) return; const d = z.querySelector('details'); if (d) d.open = true; z.scrollIntoView({ block: 'start' }); }, 700);
-      break;
+    case 'recrutements': versAlertes(); montrerQuandPret('.rec-card', false); break;
+    case 'rencontres': versAlertes(); montrerQuandPret('.renc-section', true); break;
     default: break;
   }
 }
