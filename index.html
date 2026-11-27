@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-version" content="2026.11.25-3">
-<meta name="app-update-level" content="minor">
+<meta name="app-version" content="2026.11.27-1">
+<meta name="app-update-level" content="major">
 <title>Suivi Candidatures</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1747,6 +1747,14 @@ tr:last-child td { border-bottom: none; }
 .renc-btn[disabled] { border-color: var(--cdm-line); color: var(--cdm-grey); cursor: default; }
 #recrutements-zone { width: 100%; }
 
+/* ── Bandeau « Nouveautés » ── */
+.nouv-banner { display: flex; align-items: center; gap: 12px; background: var(--cdm-primary); color: var(--cdm-primary-ink); border-radius: 14px; padding: 12px 8px 12px 16px; margin-bottom: 14px; }
+.nouv-texte { flex: 1; min-width: 0; }
+.nouv-titre { font-family: 'Space Grotesk','DM Sans',sans-serif; font-weight: 600; font-size: 16px; color: var(--cdm-accent); }
+.nouv-desc { font-size: 14px; line-height: 1.4; margin-top: 2px; }
+.nouv-voir { flex: 0 0 auto; background: var(--cdm-accent); color: var(--cdm-accent-ink); border: none; border-radius: 20px; padding: 0 14px; min-height: 44px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.nouv-fermer { flex: 0 0 auto; width: 44px; height: 44px; background: none; border: none; color: var(--cdm-primary-ink); font-size: 22px; line-height: 1; cursor: pointer; }
+
 /* ── Pastille de notifications ── */
 .notif-bell { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); display: none; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
 .notif-bell svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1905,6 +1913,8 @@ tr:last-child td { border-bottom: none; }
       </div>
     </div>
 
+    <div class="nouv-zone"></div>
+
     <div class="mdash-stats-row" id="mdash-stats">
       <div class="mdash-stat"><div class="mdash-stat-num" id="mdstat-envoyee">0</div><div class="mdash-stat-lbl">Envoyées</div></div>
       <div class="mdash-stat"><div class="mdash-stat-num" id="mdstat-entretien">0</div><div class="mdash-stat-lbl">Entretiens</div></div>
@@ -2039,6 +2049,7 @@ tr:last-child td { border-bottom: none; }
       <button onclick="clearMobileRelanceFilter()">Afficher toutes les candidatures</button>
     </div>
     <button class="mcand-fab-m" onclick="openModal()" aria-label="Ajouter une candidature">+</button>
+    <div class="nouv-zone"></div>
     <div class="stats-row" id="youth-stats">
       <div class="stat-card" onclick="showStats()"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">Total</div></div>
       <div class="stat-card" onclick="showStats()" ><div class="stat-num" id="stat-entretien" style="color:var(--entretien-dot)">—</div><div class="stat-lbl">Entretiens</div></div>
@@ -3362,6 +3373,7 @@ function showScreen(name) {
   if (name === 'counselor' && typeof tutoConseillerOnScreen === 'function') setTimeout(tutoConseillerOnScreen, 900);
   if (name === 'alertes' && typeof loadRecrutements === 'function') loadRecrutements();
   if (typeof majCloche === 'function') majCloche(name);
+  if (typeof renderNouveautes === 'function' && (name === 'dashboard' || name === 'youth')) renderNouveautes();
 }
 
 // ── NAVIGATION MOBILE (Dashboard / Mes candidatures / Annonces / Profil) ─────
@@ -7174,7 +7186,18 @@ const TUTO_BULLES = {
     { v: 1, cible: '#mprofil-notif-main', pos: 'haut', texte: "Activez les notifications pour être prévenu des relances et des nouvelles places. Le tutoriel est terminé !", bouton: 'Terminer' },
   ],
 };
-const TUTO_VERSIONS = { intro: 1, dashboard: 1, youth: 1, alertes: 1, profil: 1, conseiller: 1 };
+const TUTO_VERSIONS = { intro: 1, dashboard: 1, youth: 1, alertes: 1, profil: 1, conseiller: 1, nouv: 1 };
+
+// ── NOUVEAUTÉS : bandeau fermable, et cartes détaillées sur demande ──────────
+// Le bandeau s'affiche une fois aux jeunes qui ont déjà vu l'introduction ; fermé ou parcouru,
+// il est marqué comme lu (rubrique « nouv »). Pour une prochaine série : changer ces cartes et augmenter TUTO_VERSIONS.nouv.
+const NOUV_TITRE = 'Nouveautés';
+const NOUV_DESC = 'Notifications, stage et recrutements en direct.';
+const NOUV_CARTES = [
+  { titre: 'La cloche de notifications', texte: "La cloche en haut à droite garde l'historique de toutes vos notifications. Les nouvelles sont en surbrillance. Touchez-en une pour ouvrir directement l'écran concerné." },
+  { titre: 'Le statut Stage', texte: "Quand vous décrochez un stage, passez la candidature au statut Stage et indiquez les dates. Le dernier jour, une notification vous rappelle de demander votre rapport de stage." },
+  { titre: 'Les recrutements en direct', texte: "Sur l'écran Annonces, retrouvez les recrutements en direct qui correspondent à vos projets. Touchez Je m'y rends pour être prévenu avant. Ensuite, Mes rencontres garde les personnes rencontrées, vos notes, un mail de remerciement tout prêt et l'ajout à vos candidatures." },
+];
 
 
 // ── TUTORIEL CONSEILLER ──────────────────────────────────────────────────────
@@ -7403,12 +7426,31 @@ function tutoIntroNext() {
   if (tutoIntroIdx < tutoIntroList.length - 1) { tutoIntroIdx++; tutoIntroRender(); }
   else tutoIntroEnd();
 }
+function nouveautesVisibles() {
+  if (currentRole !== 'youth' || !currentUser) return false;
+  const st = tutoLoad();
+  return (st.intro || 0) >= 1 && (st.nouv || 0) < TUTO_VERSIONS.nouv;
+}
+function renderNouveautes() {
+  const html = nouveautesVisibles()
+    ? '<div class="nouv-banner"><div class="nouv-texte"><div class="nouv-titre">' + NOUV_TITRE + '</div><div class="nouv-desc">' + NOUV_DESC + '</div></div>'
+      + '<button type="button" class="nouv-voir" onclick="nouveautesDecouvrir()">Découvrir</button>'
+      + '<button type="button" class="nouv-fermer" onclick="nouveautesFermer()" aria-label="Fermer les nouveautés">×</button></div>'
+    : '';
+  document.querySelectorAll('.nouv-zone').forEach(z => { z.innerHTML = html; });
+}
+function nouveautesFermer() { tutoMark('nouv'); renderNouveautes(); }
+function nouveautesDecouvrir() {
+  if (tutoActive) return;
+  tutoIntroStart(NOUV_CARTES, '', () => { tutoMark('nouv'); renderNouveautes(); });
+}
+
 function tutoIntroEnd() {
   document.getElementById('tuto-intro').classList.remove('show');
   tutoActive = false;
   // Cartes du tutoriel conseiller : on enchaîne avec les bulles, sans toucher à la progression des jeunes
   if (tutoIntroOnEnd) { const f = tutoIntroOnEnd; tutoIntroOnEnd = null; setTimeout(f, 200); return; }
-  tutoMark('intro');
+  tutoMark('intro'); tutoMark('nouv');   // un nouveau jeune voit déjà tout dans l'introduction
   setTimeout(() => tutoOnScreen(tutoIntroAfter || 'dashboard'), 200);
 }
 
